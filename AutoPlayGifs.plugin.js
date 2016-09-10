@@ -59,7 +59,7 @@ agif.prototype.getDescription = function () {
     return "Autoplay gifs without having to hover.";
 };
 agif.prototype.getVersion = function () {
-    return "0.2.3";
+    return "1.0.0";
 };
 agif.prototype.getAuthor = function () {
     return "noodlebox";
