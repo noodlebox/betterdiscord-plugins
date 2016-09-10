@@ -4,16 +4,32 @@ var agif = function () {};
 
 // Autoplay GIFs
 agif.prototype.convert = function (target) {
-    $(target).find(".image:has(canvas)").each(function() {
-        var canvas = $(this).children("canvas").first();
+    // Handle GIF
+    $(target).find(".image:has(canvas)").each(function () {
+        var image = $(this);
+        var canvas = image.children("canvas").first();
+        // Replace GIF preview with actual image
         var src = canvas.attr("src");
         if(src !== undefined) {
-            $(this).replaceWith($("<img>", {
+            image.replaceWith($("<img>", {
                 src: canvas.attr("src"),
                 width: canvas.attr("width"),
-                height: canvas.attr("height")
-            }).addClass("image kawaii-agif"));
+                height: canvas.attr("height"),
+            }).addClass("image kawaii-autogif"));
         }
+    });
+
+    // Handle GIFV
+    $(target).find(".embed-thumbnail-gifv:has(video)").each(function () {
+        var embed = $(this);
+        var video = embed.children("video").first();
+        // Remove the class, embed-thumbnail-gifv, to avoid the "GIF" overlay
+        embed.removeClass("embed-thumbnail-gifv").addClass("kawaii-autogif");
+        // Prevent the default behavior of pausing the video
+        embed.parent().on("mouseout.autoGif", function (event) {
+            event.stopPropagation();
+        });
+        video[0].play();
     });
 };
 
