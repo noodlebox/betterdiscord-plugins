@@ -76,6 +76,11 @@ var ownerTag = function () {};
         addTags(usernames.add(members));
     };
 
+    ownerTag.prototype.onSwitch = function () {
+        this.stop();
+        this.start();
+    };
+
     ownerTag.prototype.load = function () {};
 
     ownerTag.prototype.unload = function () {};
