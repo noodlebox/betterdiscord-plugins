@@ -104,7 +104,7 @@ var ownerTag = function () {};
     };
 
     ownerTag.prototype.getVersion = function () {
-        return "1.0.0";
+        return "1.0.1";
     };
 
     ownerTag.prototype.getAuthor = function () {
