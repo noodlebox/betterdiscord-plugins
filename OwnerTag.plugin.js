@@ -16,6 +16,28 @@ var ownerTag = function () {};
         }
     }
 
+    // Get the relevant user ID for an element, or undefined
+    function getUserId(e) {
+        var props = getInternalProps(e);
+        if (props === undefined) {
+            return undefined;
+        }
+
+        try {
+            return props.user.id;
+        } catch (err) {
+            // Catch TypeError if no user in props
+        }
+
+        try {
+            return props.message.author.id;
+        } catch (err) {
+            // Catch TypeError if no message in props
+        }
+
+        return undefined;
+    }
+
     // Helper function for finding all elements matching selector affected by a mutation
     function mutationFind(mutation, selector) {
         var target = $(mutation.target), addedNodes = $(mutation.addedNodes);
@@ -42,6 +64,8 @@ var ownerTag = function () {};
             .addClass("kawaii-tagged");
     }
 
+    var prevOwnerId;
+
     ownerTag.prototype.start = function () {
         // Get the ID of the server's owner
         var ownerId = getOwnerId();
@@ -49,14 +73,13 @@ var ownerTag = function () {};
             return;
         }
 
-        // Get the set of username elements belonging to the owner
-        var usernames = $(".username-wrapper")
-            .filter((_, e) => getInternalProps(e).message.author.id === ownerId);
-        var members = $(".member-username")
-            .filter((_, e) => getInternalProps(e).user.id === ownerId);
+        // Get a set of message authors and server members
+        var usernames = $(".member-username, .username-wrapper");
 
         // Process usernames
-        addTags(usernames.add(members));
+        addTags(usernames.filter((_, e) => getUserId(e) === ownerId));
+
+        prevOwnerId = ownerId;
     };
 
     ownerTag.prototype.observer = function (mutation) {
@@ -66,19 +89,28 @@ var ownerTag = function () {};
             return;
         }
 
-        // Get the set of username elements belonging to the owner
-        var usernames = mutationFind(mutation, ".username-wrapper")
-            .filter((_, e) => getInternalProps(e).message.author.id === ownerId);
-        var members = mutationFind(mutation, ".member-username")
-            .filter((_, e) => getInternalProps(e).user.id === ownerId);
+        var usernames;
+        // Check if changed servers and need to redo member list tagging
+        // React likes to make minimal changes to the DOM, so owner tags
+        // will stick around (or not get added) when a user is in both this
+        // and the previous server.
+        if (ownerId !== prevOwnerId) {
+            // Get all visible members
+            usernames = $(".member-username");
+            // Remove tags that were added
+            usernames.find(".kawaii-tag").remove();
+            usernames.filter(".kawaii-tagged").removeClass("kawaii-tagged");
+            // Add the set of message authors affected by this mutation
+            usernames = usernames.add(mutationFind(mutation, ".username-wrapper"));
+        } else {
+            // Get the set of message authors and server members affected by this mutation
+            usernames = mutationFind(mutation, ".member-username, .username-wrapper");
+        }
 
         // Process usernames
-        addTags(usernames.add(members));
-    };
+        addTags(usernames.filter((_, e) => getUserId(e) === ownerId));
 
-    ownerTag.prototype.onSwitch = function () {
-        this.stop();
-        this.start();
+        prevOwnerId = ownerId;
     };
 
     ownerTag.prototype.load = function () {};
