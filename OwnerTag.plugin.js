@@ -182,7 +182,7 @@ var ownerTag = function () {};
     };
 
     ownerTag.prototype.getVersion = function () {
-        return "1.2.0";
+        return "1.2.1";
     };
 
     ownerTag.prototype.getAuthor = function () {
