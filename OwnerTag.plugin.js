@@ -38,6 +38,23 @@ var ownerTag = function () {};
         return undefined;
     }
 
+    // Get the relevant user color for an element, or undefined
+    function getUserColor(e) {
+        var props = getInternalProps(e);
+        if (props === undefined) {
+            return undefined;
+        }
+
+        try {
+            return props.message.colorString;
+        } catch (err) {
+            // Catch TypeError if no message in props
+        }
+
+        // Return colorString or undefined if not present
+        return props.colorString;
+    }
+
     // Get the relevant guild owner ID for an element, or undefined
     function getOwnerId(e) {
         var props = getInternalProps(e);
@@ -82,9 +99,17 @@ var ownerTag = function () {};
         }
 
         // Process usernames
-        usernames.filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged")
-            .after($("<span>", {class: "bot-tag kawaii-tag"}).text("OWNER"))
-            .addClass("kawaii-tagged");
+        usernames.filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged").after(function () {
+            var color = getUserColor(this);
+            console.info(this, color);
+            var tag = $("<span>", {
+                class: "bot-tag kawaii-tag",
+            }).text("OWNER");
+            if (color !== null) {
+                tag.css("background-color", color);
+            }
+            return tag;
+        }).addClass("kawaii-tagged");
 
         tags = mutationFind(mutation, ".discord-tag");
 
