@@ -158,7 +158,7 @@ var ownerTag = function () {};
     };
 
     ownerTag.prototype.getVersion = function () {
-        return "1.0.2";
+        return "1.1.0";
     };
 
     ownerTag.prototype.getAuthor = function () {
