@@ -125,7 +125,7 @@ var ownerTag = function () {};
 
     ownerTag.prototype.start = function () {
         // process entire document
-        var mutation = {target: document};
+        var mutation = {target: document, addedNodes: [document]};
         processServer(mutation);
         processProfile(mutation);
     };
