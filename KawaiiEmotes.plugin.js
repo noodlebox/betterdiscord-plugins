@@ -568,6 +568,8 @@ var kawaiiemotes = function () {};
     function updateSettings() {
         var oldEmoteSets = activeEmoteSets.slice();
 
+	activeEmoteSets = [];
+
         if (settingsCookie["bda-es-7"]) {
             activeEmoteSets.push(twitchEmotes);
             activeEmoteSets.push(twitchSubEmotes);
