@@ -632,7 +632,7 @@ var kawaiiemotes = function () {};
         // Disable this, because this plugin's mutation observer handles it
         EmoteModule.prototype.obsCallback = $.noop;
         // Hook into these to notify when settings are updated
-        SettingsPanel.prototype.initSettings = function () {
+        SettingsPanel.prototype.init = function () {
             this.oldInit();
             updateSettings();
         };
