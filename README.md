@@ -15,7 +15,3 @@ Better emote parsing for BetterDiscord. Fixes a few issues:
 - Makes tooltips and styling more consistent with standard emoji
 - Parses more reliably, including on message edits
 - Designed to load emote lists asynchronously
-
-Not yet implemented:
-
-- Add emote to favorites
