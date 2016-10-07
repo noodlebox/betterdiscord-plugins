@@ -54,12 +54,11 @@ var kawaiiemotes = function () {};
         }
         var emote = $("<img>", {
             src: emoteURL,
-            draggable: "false",
             alt: emoteName,
             title: emoteName,
             style: "width: auto;", // Some emojis are not square (disrupts notification list though)
             class: "emoji jumboable kawaii-parseemotes",
-        });
+        }).attr("draggable", "false");
         return emote;
     };
 
