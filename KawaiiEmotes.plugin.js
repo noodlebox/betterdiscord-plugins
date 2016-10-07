@@ -59,6 +59,9 @@ var kawaiiemotes = function () {};
             style: "width: auto;", // Some emojis are not square (disrupts notification list though)
             class: "emoji jumboable kawaii-parseemotes",
         }).attr("draggable", "false");
+        emote.on("click.kawaiiFavorite", function () {
+            quickEmoteMenu.favorite(emoteName, emoteURL);
+        });
         return emote;
     };
 
