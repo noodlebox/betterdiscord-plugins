@@ -230,6 +230,7 @@ var kawaiiemotes = function () {};
                     });
                 });
                 console.info("KawaiiEmotes:", "FFZ global emotes loaded:", loaded, "skipped:", skipped);
+                self.loaded = true;
                 callbacks.success(self);
             },
             error: function (xhr, textStatus, errorThrown) {
