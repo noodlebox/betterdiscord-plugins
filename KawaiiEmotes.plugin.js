@@ -66,11 +66,9 @@ var kawaiiemotes = function () {};
     };
 
     // Filter function for "Twitch-style" emotes, to avoid collisions with common words
-    // Check if at least 4 word characters, and has at least one capital letter
-    // Based on current FFZ naming requirements (older FFZ emotes may not satisfy these requirements)
-    // See: https://www.frankerfacez.com/emoticons/submit
+    // Check if at least 4 word characters
     function emoteFilter(name) {
-        return (/^\w{4,}$/.test(name) && /[A-Z]/.test(name));
+        return /^\w{4,}$/.test(name);
     }
 
     // Global Twitch emotes (emoteset 0), filtered by emoteFilter
