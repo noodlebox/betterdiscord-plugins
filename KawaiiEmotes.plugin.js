@@ -56,8 +56,7 @@ var kawaiiemotes = function () {};
             src: emoteURL,
             alt: emoteName,
             title: emoteName,
-            style: "width: auto;", // Some emojis are not square (disrupts notification list though)
-            class: "emoji jumboable kawaii-parseemotes",
+            class: "emoji kawaii-parseemotes",
         }).attr("draggable", "false");
         emote.on("click.kawaiiFavorite", function () {
             quickEmoteMenu.favorite(emoteName, emoteURL);
@@ -487,7 +486,23 @@ var kawaiiemotes = function () {};
                 }
             });
 
-            return this.parseEmotesStandard(standardSets).parseEmotesTwitch(twitchSets);
+            // Process messages for emote replacements
+            this.parseEmotesStandard(standardSets).parseEmotesTwitch(twitchSets);
+
+            // Properly jumboify emotes/emoji in messages with no other text
+            this.has(".emoji").each(function () {
+                // Get the "edited" text, if any, regardless of how it's styled or localized
+                var edited = $(this).find(".edited").text();
+                // Get the remaining message text
+                var text = this.textContent.replace(edited, "").trim();
+                if (text.length === 0) {
+                    $(this).find(".emoji").addClass("jumboable");
+                } else {
+                    $(this).find(".emoji").removeClass("jumboable");
+                }
+            });
+
+            return this;
         };
 
         // Replace title text with fancy tooltips
