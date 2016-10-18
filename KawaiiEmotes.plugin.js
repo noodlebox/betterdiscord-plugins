@@ -60,6 +60,30 @@ var kawaiiemotes = function () {};
             title: emoteName,
             "class": "emoji kawaii-parseemotes",
         }).attr("draggable", "false");
+
+        // Show a fake favorite button
+        emote.css("cursor", "pointer");
+        emote.on("mouseover.kawaiiFavorite", function () {
+            // Create and insert favorite button
+            var fav = $("<div>").addClass("fav")
+                .css("display", "block")
+                .css("pointer-events", "none")
+                .appendTo($(".tooltips"));
+
+            // Position the button
+            var position = emote.offset();
+            position.top -= fav.height()/2;
+            position.left += emote.width() - fav.width()/2;
+            fav.offset(position);
+
+            // Set a handler to destroy the button
+            emote.on("mouseout.kawaiiFavorite", function () {
+                // remove this handler
+                emote.off("mouseout.kawaiiFavorite");
+                fav.remove();
+            });
+        });
+
         emote.on("click.kawaiiFavorite", function () {
             quickEmoteMenu.favorite(emoteName, emoteURL);
         });
@@ -855,7 +879,7 @@ var kawaiiemotes = function () {};
 
         // When a line is edited, Discord may stuff the new contents inside one of our emotes
         messages.find(".kawaii-parseemotes").contents()
-            .parent().trigger("mouseout.fancyTooltip").end()
+            .parent().trigger("mouseout").end()
             .unwrap();
         // Process messages
         messages.parseEmotes(sets, {allowWide: settings.allowWide});
@@ -921,7 +945,7 @@ var kawaiiemotes = function () {};
         parseEmoteSets(messages, activeEmoteSets);
 
         // Clean up any remaining tooltips
-        mutationFindRemoved(mutation, ".kawaii-fancytooltip").trigger("mouseout.fancyTooltip");
+        mutationFindRemoved(mutation, ".kawaii-fancytooltip").trigger("mouseout");
     };
 
     // Parse the whole document for a single emote set, if it is active
