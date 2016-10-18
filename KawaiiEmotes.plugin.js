@@ -44,7 +44,9 @@ var kawaiiemotes = function () {};
         });
     };
     // Create and return an emote element, or undefined if no match found
-    EmoteSet.prototype.createEmote = function (emoteName) {
+    EmoteSet.prototype.createEmote = function (emoteName, options) {
+        options = $.extend({allowWide: false}, options);
+
         var emoteURL = this.getUrl(emoteName);
         if (emoteURL === undefined) {
             return undefined;
@@ -56,11 +58,17 @@ var kawaiiemotes = function () {};
             src: emoteURL,
             alt: emoteName,
             title: emoteName,
-            class: "emoji kawaii-parseemotes",
+            "class": "emoji kawaii-parseemotes",
         }).attr("draggable", "false");
         emote.on("click.kawaiiFavorite", function () {
             quickEmoteMenu.favorite(emoteName, emoteURL);
         });
+        if (options.allowWide) {
+            emote.on("load.kawaiiWideEmote", function () {
+                var wide = this.naturalWidth > this.naturalHeight;
+                $(this).css("width", wide ? "auto" : "");
+            });
+        }
         return emote;
     };
 
@@ -312,6 +320,271 @@ var kawaiiemotes = function () {};
         })(emotesFfz);
     };
 
+    // End emote data
+
+    // Settings panel helpers
+
+    // Create and return a new top-level settings panel
+    function topPanel() {
+        var panel = $("<form>")
+            .addClass("form")
+            .css("width", "100%");
+
+        return panel;
+    }
+
+    // Create and return a container for control groups
+    function controlGroups() {
+        return $("<div>").addClass("control-groups");
+    }
+
+    // Create and return a flexible control group
+    // settings (object)
+    //   label
+    //     an element or something JQuery-ish
+    //     or, if string, use as plain text
+    function controlGroup(settings) {
+        var group = $("<div>").addClass("control-group");
+
+        if (typeof settings.label === "string") {
+            group.append($("<label>").text(settings.label));
+        } else if (settings.label !== undefined) {
+            group.append($("<label>").append(settings.label));
+        }
+
+        return group;
+    }
+
+    // Create and return a group of checkboxes
+    // settings (object)
+    //   items (array)
+    //     an array of settings objects to be passed to checkbox()
+    //   callback (function(state))
+    //     called with the current state, when it changes
+    //     state is an array of boolean values
+    function checkboxGroup(settings) {
+        settings = $.extend({
+            items: [],
+            callback: $.noop,
+        }, settings);
+
+        var state = settings.items.map(item => item.checked === true);
+        function onClick(i, itemState) {
+            if (settings.items[i].callback !== undefined) {
+                settings.items[i].callback(itemState);
+            }
+            state[i] = itemState;
+            settings.callback(state);
+        }
+
+        var group = $("<ul>").addClass("checkbox-group");
+
+        group.append(settings.items.map(function (item, i) {
+            return checkbox($.extend({}, item, {
+                callback: onClick.bind(undefined, i),
+            }));
+        }));
+
+        return group;
+    }
+
+    // Create and return a checkbox
+    // settings (object)
+    //   label
+    //     an element or something JQuery-ish
+    //     or, if string, use as plain text
+    //   help
+    //     an element or something JQuery-ish
+    //     or, if string, use as plain text
+    //   checked (boolean)
+    //   disabled (boolean)
+    //   callback (function(state))
+    //     called with the current state, when it changes
+    //     state is a boolean
+    function checkbox(settings) {
+        settings = $.extend({
+            checked: false,
+            disabled: false,
+            callback: $.noop,
+        }, settings);
+
+        var input = $("<input>").attr("type", "checkbox")
+            .prop("checked", settings.checked)
+            .prop("disabled", settings.disabled);
+
+        var inner = $("<div>").addClass("checkbox-inner")
+            .append(input)
+            .append($("<span>"));
+
+        var outer = $("<div>").addClass("checkbox").append(inner);
+
+        if (settings.disabled) {
+            outer.addClass("disabled");
+        }
+
+        if (typeof settings.label === "string") {
+            outer.append($("<span>").text(settings.label));
+        } else if (settings.label !== undefined) {
+            outer.append($("<span>").append(settings.label));
+        }
+
+        outer.on("click.kawaiiSettings", function () {
+            if (!input.prop("disabled")) {
+                var checked = !input.prop("checked");
+                input.prop("checked", checked);
+                settings.callback(checked);
+            }
+        });
+
+        var item = $("<li>").append(outer);
+
+        var help;
+        if (typeof settings.help === "string") {
+            help = $("<div>").text(settings.help);
+        } else if (settings.help !== undefined) {
+            help = $("<div>").append(settings.help);
+        }
+
+        if (help !== undefined) {
+            help.appendTo(item)
+                .addClass("help-text")
+                .css("margin-top", "-3px")
+                .css("margin-left", "27px");
+        }
+
+        return item;
+    }
+
+    // Generate a random string of alphanumeric characters
+    // length
+    //   number of characters in output (default: 8)
+    function randomString(length) {
+        var n = (length !== undefined) ? length : 8;
+        var c = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        var out = "";
+        for (let i = 0; i < n; i++) {
+            out += c[Math.floor(Math.random() * c.length)];
+        }
+        return out;
+    }
+
+    // Create and return a group of radio buttons
+    // settings (object)
+    //   items (array)
+    //     an array of settings objects to be passed to checkbox()
+    //   callback (function(state))
+    //     called with the current state, when it changes
+    //     state is the index of the selected element
+    function radioGroup(settings) {
+        settings = $.extend({
+            items: [],
+            callback: $.noop,
+        }, settings);
+
+        var name = "kawaiiRadio$" + randomString();
+
+        var state = settings.items.findIndex(item => item.checked === true);
+        function onClick(i, itemState) {
+            if (!itemState) {
+                return;
+            }
+            if (i !== state) {
+                if (settings.items[state] !== undefined && settings.items[state].callback !== undefined) {
+                    settings.items[state].callback(false);
+                }
+                if (settings.items[i].callback !== undefined) {
+                    settings.items[i].callback(true);
+                }
+                state = i;
+                settings.callback(state);
+            }
+        }
+
+        var group = $("<ul>").addClass("radio-group");
+
+        group.append(settings.items.map(function (item, i) {
+            return radio($.extend({}, item, {
+                name: name,
+                callback: onClick.bind(undefined, i),
+            }));
+        }));
+
+        return group;
+    }
+
+    // Create and return a radio button
+    // settings (object)
+    //   label
+    //     an element or something JQuery-ish
+    //     or, if string, use as plain text
+    //   help
+    //     an element or something JQuery-ish
+    //     or, if string, use as plain text
+    //   checked (boolean)
+    //   disabled (boolean)
+    //   name (string)
+    //     name of the radio group this belongs to
+    //   callback (function(state))
+    //     called with the current state, when it changes
+    //     state is a boolean
+    function radio(settings) {
+        settings = $.extend({
+            checked: false,
+            disabled: false,
+            callback: $.noop,
+        }, settings);
+
+        var input = $("<input>").attr("type", "radio")
+            .attr("name", settings.name)
+            .prop("checked", settings.checked)
+            .prop("disabled", settings.disabled);
+
+        var inner = $("<div>").addClass("radio-inner")
+            .append(input)
+            .append($("<span>"));
+
+        var outer = $("<div>").addClass("radio").append(inner);
+
+        if (settings.disabled) {
+            outer.addClass("disabled");
+        }
+
+        if (typeof settings.label === "string") {
+            outer.append($("<span>").text(settings.label));
+        } else if (settings.label !== undefined) {
+            outer.append($("<span>").append(settings.label));
+        }
+
+        outer.on("click.kawaiiSettings", function () {
+            if (!input.prop("disabled")) {
+                var checked = true;
+                input.prop("checked", checked);
+                settings.callback(checked);
+            }
+        });
+
+        var item = $("<li>").append(outer);
+
+        var help;
+        if (typeof settings.help === "string") {
+            help = $("<div>").text(settings.help);
+        } else if (settings.help !== undefined) {
+            help = $("<div>").append(settings.help);
+        }
+
+        if (help !== undefined) {
+            help.appendTo(item)
+                .addClass("help-text")
+                .css("margin-top", "-3px")
+                .css("margin-left", "41px");
+        }
+
+        return item;
+    }
+
+    // End settings panel helpers
+
     function initJQueryPlugins($) {
         // jQuery Plugins
 
@@ -340,7 +613,7 @@ var kawaiiemotes = function () {};
         };
 
         // Parse for standard emotes in message text
-        $.fn.parseEmotesStandard = function (emoteSets) {
+        $.fn.parseEmotesStandard = function (emoteSets, options) {
             if (emoteSets === undefined || emoteSets.length === 0) {
                 return this;
             }
@@ -368,7 +641,7 @@ var kawaiiemotes = function () {};
 
                     var emote;
                     if (emoteSets.some(function (set) {
-                        emote = set.createEmote(/^:([^:]+):$/.exec(words[i+1])[1]);
+                        emote = set.createEmote(/^:([^:]+):$/.exec(words[i+1])[1], options);
                         return (emote !== undefined);
                     })) {
                         modified = true;
@@ -406,7 +679,7 @@ var kawaiiemotes = function () {};
         ]);
 
         // Parse for Twitch-style emotes in message text
-        $.fn.parseEmotesTwitch = function (emoteSets) {
+        $.fn.parseEmotesTwitch = function (emoteSets, options) {
             if (emoteSets === undefined || emoteSets.length === 0) {
                 return this;
             }
@@ -435,7 +708,7 @@ var kawaiiemotes = function () {};
                     var modifier = res[2];
                     var emote;
                     if (($.inArray(word, bemotes) == -1) && emoteSets.some(function (set) {
-                        emote = set.createEmote(word);
+                        emote = set.createEmote(word, options);
                         return (emote !== undefined);
                     })) {
                         modified = true;
@@ -471,7 +744,7 @@ var kawaiiemotes = function () {};
         };
 
         // Parse emotes (of any style) in message text
-        $.fn.parseEmotes = function (emoteSets) {
+        $.fn.parseEmotes = function (emoteSets, options) {
             if (emoteSets === undefined || emoteSets.length === 0) {
                 return this;
             }
@@ -486,23 +759,39 @@ var kawaiiemotes = function () {};
                 }
             });
 
-            // Process messages for emote replacements
-            this.parseEmotesStandard(standardSets).parseEmotesTwitch(twitchSets);
-
-            // Properly jumboify emotes/emoji in messages with no other text
-            this.has(".emoji").each(function () {
-                // Get the "edited" text, if any, regardless of how it's styled or localized
-                var edited = $(this).find(".edited").text();
-                // Get the remaining message text
-                var text = this.textContent.replace(edited, "").trim();
-                if (text.length === 0) {
-                    $(this).find(".emoji").addClass("jumboable");
-                } else {
-                    $(this).find(".emoji").removeClass("jumboable");
-                }
-            });
+            this.parseEmotesStandard(standardSets, options);
+            this.parseEmotesTwitch(twitchSets, options);
 
             return this;
+        };
+
+        // Jumboify emotes/emoji appropriately
+        $.fn.jumboify = function (options) {
+            options = $.extend({}, $.fn.jumboify.defaults, options);
+
+            if (!options.forceJumbo) {
+                // Properly jumboify emotes/emoji in messages with no other text
+                this.has(".emoji").each(function () {
+                    // Get the "edited" text, if any, regardless of how it's styled or localized
+                    var edited = $(this).find(".edited").text();
+                    // Get the remaining message text
+                    var text = this.textContent.replace(edited, "").trim();
+                    if (text.length === 0) {
+                        $(this).find(".emoji").addClass("jumboable");
+                    } else {
+                        $(this).find(".emoji").removeClass("jumboable");
+                    }
+                });
+            } else {
+                // Everything is jumboified, similar to old behavior
+                this.find(".emoji").addClass("jumboable");
+            }
+
+            return this;
+        };
+
+        $.fn.jumboify.defaults = {
+            forceJumbo: false,
         };
 
         // Replace title text with fancy tooltips
@@ -569,10 +858,11 @@ var kawaiiemotes = function () {};
             .parent().trigger("mouseout.fancyTooltip").end()
             .unwrap();
         // Process messages
-        messages.parseEmotes(sets);
+        messages.parseEmotes(sets, {allowWide: settings.allowWide});
         if (settingsCookie["bda-es-6"]) {
             messages.find(".kawaii-parseemotes[title]").fancyTooltip();
         }
+        messages.jumboify({forceJumbo: settings.forceJumbo});
 
         // Ensure we're still scrolled to the bottom if necessary
         if (atBottom) {
@@ -615,10 +905,14 @@ var kawaiiemotes = function () {};
             }
         }
         if (modified) {
-            revertEmotes();
-            var messages = $(".markup, .message-content").not(":has(.message-content)");
-            parseEmoteSets(messages, activeEmoteSets);
+            reload();
         }
+    }
+
+    function reload() {
+        revertEmotes();
+        var messages = $(".markup, .message-content").not(":has(.message-content)");
+        parseEmoteSets(messages, activeEmoteSets);
     }
 
     kawaiiemotes.prototype.observer = function (mutation) {
@@ -638,11 +932,46 @@ var kawaiiemotes = function () {};
         }
     }
 
-    kawaiiemotes.prototype.load = function () {
-        initJQueryPlugins($);
+    // Settings
+    //   forceJumbo
+    //     false - imitate Discord's behavior: emotes only "jumboable" when on a line with no other text
+    //     true  - similar to "classic" BD behavior: emotes and emoji are always "jumboable"
+    //   allowWide
+    //     false - all emotes are forced to a square aspect ratio
+    //     true  - wide emotes may expand horizontally to meet their intended aspect ratio
+    //   highDpi
+    //     false - always use the base emote size
+    //     true  - use srcset to specify high-DPI versions
+
+    var settings, defaultSettings = {
+        forceJumbo: false,
+        allowWide: false,
+        highDpi: false,
     };
 
-    kawaiiemotes.prototype.unload = function () {};
+    // Load or store settings from localStorage
+    function localSettings(settings) {
+        if (settings === undefined) {
+            var localSettings;
+            try {
+                localSettings = JSON.parse(localStorage.kawaiiemotes);
+            } catch (err) {
+                localSettings = {};
+            }
+            return $.extend({}, defaultSettings, localSettings);
+        }
+
+        localStorage.kawaiiemotes = JSON.stringify(settings);
+    }
+
+    kawaiiemotes.prototype.load = function () {
+        initJQueryPlugins($);
+        settings = localSettings();
+    };
+
+    kawaiiemotes.prototype.unload = function () {
+        localSettings(settings);
+    };
 
     kawaiiemotes.prototype.start = function () {
         // Save these to be restored later
@@ -682,7 +1011,41 @@ var kawaiiemotes = function () {};
     };
 
     kawaiiemotes.prototype.getSettingsPanel = function () {
-        return "";
+        var panel = topPanel();
+
+        var appearanceControls = controlGroups().appendTo(panel);
+
+        var tweaksControl = controlGroup({label: "Appearance Tweaks (Experimental)"})
+            .appendTo(appearanceControls)
+            .append(checkboxGroup({
+                callback: state => {
+                    localSettings(settings);
+                    reload();
+                },
+                items: [
+                    {
+                        label: "Always Jumboify emotes.",
+                        help: "Emotes and emoji are always jumbo-sized, regardless of whether the message contains any other text.",
+                        checked: settings.forceJumbo,
+                        callback: state => { settings.forceJumbo = state; },
+                    },
+                    {
+                        label: "Allow wide-format emotes.",
+                        help: "Let FFZ's wide-format emotes blow up your line lengths.",
+                        checked: settings.allowWide,
+                        callback: state => { settings.allowWide = state; },
+                    },
+                    {
+                        label: "Use High-DPI Emotes when available. (soon™)",
+                        checked: settings.highDpi,
+                        callback: state => { settings.highDpi = state; },
+                        disabled: true,
+                    },
+                ],
+            }));
+
+
+        return panel;
     };
 
     kawaiiemotes.prototype.getName = function () {
