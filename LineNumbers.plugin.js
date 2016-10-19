@@ -165,18 +165,18 @@ var lineNumbers = function () {};
     }
 
     .hljs ol li {
-        text-indent: -3em;
-        margin-left: 2.5em;
-        padding-left: 0.5em;
+        text-indent: -4ch;
+        margin-left: 3.5ch;
+        padding-left: 0.5ch;
         border-left: 1px solid rgba(0,0,0,0.2);
     }
 
     .hljs ol li::before {
         color: rgba(127,127,127,0.5);
         display: inline-block;
-        width: 2em;
-        margin-right: 0.5em;
-        padding-right: 0.5em;
+        width: 3ch;
+        margin-right: 0.5ch;
+        padding-right: 0.5ch;
         text-align: right;
         counter-increment: linenumbers;
         content: counter(linenumbers);
