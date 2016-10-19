@@ -7,11 +7,10 @@ var lineNumbers = function () {};
 
     function processCodeBlocks(mutation) {
         mutationFind(mutation, ".hljs").not(":has(ol)")
-            .addClass("kawaii-linenumbers")
             .each(function () {
                 this.innerHTML = this.innerHTML.split("\n").map(line => "<li>"+line+"</li>").join("");
             })
-            .wrapInner($("<ol>"));
+            .wrapInner($("<ol>").addClass("kawaii-linenumbers"));
     }
 
     // Helper function for finding all elements matching selector affected by a mutation
@@ -40,7 +39,7 @@ var lineNumbers = function () {};
     lineNumbers.prototype.stop = function () {
         $(".kawaii-linenumbers")
             .removeClass("kawaii-linenumbers")
-            .find("ol > li")
+            .children()
             .not(":last-child").append(document.createTextNode("\n")).end()
             .contents().unwrap().unwrap();
     };
