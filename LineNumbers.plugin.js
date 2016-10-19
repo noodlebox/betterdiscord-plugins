@@ -160,6 +160,7 @@ var lineNumbers = function () {};
 
     var css = `
     .hljs ol {
+        list-style: none;
         counter-reset: linenumbers;
     }
 
