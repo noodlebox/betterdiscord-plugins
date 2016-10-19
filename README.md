@@ -6,6 +6,9 @@ Assorted small plugins for [BetterDiscord](https://github.com/Jiiks/BetterDiscor
 ### AutoPlayGifs.plugin.js
 Autoplay GIF and GIFV without having to hover.
 
+### LineNumbers.plugin.js
+Add line numbers to code blocks.
+
 ### OwnerTag.plugin.js
 Show a tag next to a server owner's name.
 
