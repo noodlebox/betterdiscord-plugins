@@ -38,7 +38,11 @@ var lineNumbers = function () {};
     lineNumbers.prototype.unload = function () {};
 
     lineNumbers.prototype.stop = function () {
-        // TODO
+        $(".kawaii-linenumbers")
+            .removeClass("kawaii-linenumbers")
+            .find("ol > li")
+            .not(":last-child").append(document.createTextNode("\n")).end()
+            .contents().unwrap().unwrap();
     };
 
     lineNumbers.prototype.getSettingsPanel = function () {
