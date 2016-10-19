@@ -158,12 +158,34 @@ var lineNumbers = function () {};
         return mutated.add(descendants).add(ancestors);
     }
 
+    var css = `
+    .hljs ol {
+        counter-reset: linenumbers;
+    }
+
+    .hljs ol li {
+        text-indent: -3em;
+        margin-left: 2.5em;
+        padding-left: 0.5em;
+        border-left: 1px solid rgba(0,0,0,0.2);
+    }
+
+    .hljs ol li::before {
+        color: rgba(127,127,127,0.5);
+        display: inline-block;
+        width: 2em;
+        margin-right: 0.5em;
+        padding-right: 0.5em;
+        text-align: right;
+        counter-increment: linenumbers;
+        content: counter(linenumbers);
+        -webkit-user-select: none;
+        user-select: none;
+    }`;
+
     lineNumbers.prototype.start = function () {
         if (!settings.noStyle) {
-            BdApi.injectCSS("kawaii-linenumbers-css",
-                    ".hljs > ol {\n"+
-                    "    list-style: decimal-leading-zero inside;\n"+
-                    "}");
+            BdApi.injectCSS("kawaii-linenumbers-css", css);
         }
         // process entire document
         var mutation = {target: document, addedNodes: [document]};
