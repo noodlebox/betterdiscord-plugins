@@ -264,7 +264,7 @@ var lineNumbers = function () {};
     };
 
     lineNumbers.prototype.getVersion = function () {
-        return "0.1.0";
+        return "1.0.0";
     };
 
     lineNumbers.prototype.getAuthor = function () {
