@@ -618,7 +618,7 @@ var kawaiiemotes = function () {};
                 return this;
             }
 
-            this.add(this.find(":not(.edited, code, code *)")).textNodes().each(function () {
+            this.add(this.find().not(".edited, code, code *")).textNodes().each(function () {
                 var sub = [];
                 // separate out potential emotes
                 // all standard emotes are composed of characters in [a-zA-Z0-9_], i.e. \w between two colons, :
@@ -687,7 +687,7 @@ var kawaiiemotes = function () {};
             var emoteModsEnabled = settingsCookie["bda-es-8"];
 
             // Find and replace Twitch-style emotes
-            this.add(this.find(":not(.edited, code, code *)")).textNodes().each(function () {
+            this.add(this.find().not(".edited, code, code *")).textNodes().each(function () {
                 var sub = [];
                 // separate out potential emotes
                 // all twitch emotes (that we care about) are composed of characters in [a-zA-Z0-9_], i.e. \w
