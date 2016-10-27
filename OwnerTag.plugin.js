@@ -203,7 +203,7 @@ var ownerTag = function () {};
     };
 
     ownerTag.prototype.getVersion = function () {
-        return "1.2.1";
+        return "1.2.2";
     };
 
     ownerTag.prototype.getAuthor = function () {
