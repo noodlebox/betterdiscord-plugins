@@ -55,6 +55,22 @@ var ownerTag = function () {};
         return props.colorString;
     }
 
+    // Get the relevant guild ID for an element, or undefined
+    function getGuildId(e) {
+        var props = getInternalProps(e);
+        if (props === undefined) {
+            return undefined;
+        }
+
+        try {
+            return props.guild.id;
+        } catch (err) {
+            // Catch TypeError if no guild in props
+        }
+
+        return undefined;
+    }
+
     // Get the relevant guild owner ID for an element, or undefined
     function getOwnerId(e) {
         var props = getInternalProps(e);
@@ -71,11 +87,18 @@ var ownerTag = function () {};
         return undefined;
     }
 
+    var prevGuildId;
+
     function processServer(mutation) {
-        var ownerId, usernames, tags;
+        var guild, guildId, ownerId, usernames, tags;
+
+        guild = $(".guild.selected")[0];
+
+        // Get the ID of the server
+        guildId = getGuildId(guild);
 
         // Get the ID of the server's owner
-        ownerId = getOwnerId($(".guild.selected")[0]);
+        ownerId = getOwnerId(guild);
         if (ownerId === undefined) {
             // (Probably) not looking at a server
             return;
@@ -85,7 +108,7 @@ var ownerTag = function () {};
         // React likes to make minimal changes to the DOM, so owner tags
         // will stick around (or not get added) when a user is in both this
         // and the previous server.
-        if (ownerId !== prevOwnerId) {
+        if (guildId !== prevGuildId) {
             // Get all visible members
             usernames = $(".member-username-inner");
             // Remove tags that were added
@@ -116,7 +139,7 @@ var ownerTag = function () {};
             .append($("<span>", {class: "bot-tag bot-tag-invert kawaii-tag"}).text("OWNER"))
             .addClass("kawaii-tagged");
 
-        prevOwnerId = ownerId;
+        prevGuildId = guildId;
     }
 
     function processProfile(mutation) {
@@ -144,8 +167,6 @@ var ownerTag = function () {};
         var ancestors = target.parents(selector);
         return mutated.add(descendants).add(ancestors);
     }
-
-    var prevOwnerId;
 
     ownerTag.prototype.start = function () {
         // process entire document
