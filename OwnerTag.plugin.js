@@ -30,10 +30,36 @@ var ownerTag = function () {};
     // This is super hackish, and will likely break as Discord's internal API changes
     // Anything using this or what it returns should be prepared to catch some exceptions
     function getInternalProps(e) {
+        if (e === undefined) {
+            return undefined;
+        }
         try {
-            var reactInternal = e[Object.keys(e).filter(k => k.startsWith("__reactInternalInstance"))[0]];
-            return reactInternal._currentElement._owner._instance.props;
+            let reactInternal = e[Object.keys(e).find(k => k.startsWith("__reactInternalInstance"))];
+            let owner = reactInternal._currentElement._owner;
+            if (owner !== null) {
+                return owner._instance.props;
+            } else {
+                let surrogate;
+                surrogate = e.closest(".message");
+                if (surrogate !== null) {
+                    let index = [...surrogate.parentNode.childNodes].indexOf(surrogate);
+                    let reactInternal = surrogate[Object.keys(surrogate).find(k => k.startsWith("__reactInternalInstance"))];
+                    return reactInternal._hostParent._currentElement.props.children[0][index].props;
+                }
+                surrogate = e.closest(".member");
+                if (surrogate !== null) {
+                    let index = [...surrogate.parentNode.childNodes].indexOf(surrogate) - 1;
+                    let reactInternal = surrogate[Object.keys(surrogate).find(k => k.startsWith("__reactInternalInstance"))];
+                    return reactInternal._hostParent._currentElement.props.children[1][1][index].props;
+                }
+                surrogate = reactInternal._hostParent._currentElement.props.children;
+                while (surrogate !== undefined && surrogate.props === undefined) {
+                    surrogate = surrogate.find(v => v !== undefined && v !== null);
+                }
+                return surrogate.props;
+            }
         } catch (err) {
+            //console.error("getInternalProps:", e, err);
             return undefined;
         }
     }
