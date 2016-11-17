@@ -93,6 +93,294 @@ var kawaiiemotes = function () {};
         }
         return emote;
     };
+    EmoteSet.prototype.search = function (query) {
+        const score = function (name, query) {
+            name = name.toLowerCase();
+            query = query.toLowerCase();
+            const d = name.length - query.length;
+            const i = name.indexOf(query);
+            if (i === -1) {
+                return 0;
+            }
+            return 1 + (i+1)*(d-i+2);
+        };
+        return [...this.emoteMap.keys()]
+            .map(e => [e, score(e, query)])
+            .filter(e => e[1] !== 0);
+    };
+
+    function getCompletionsStandard(emoteSets, text) {
+        const match = text.match(/(^|\s):(\w{2,})$/);
+        if (match === null) {
+            return {completions: [], matchText: null, matchStart: -1};
+        }
+
+        const completions = emoteSets
+            .filter(s => s.emoteStyle === EmoteSet.emoteStyle.STANDARD)
+            .map(s => s.search(match[2]).map(e => [[":"+e[0]+":", s.createEmote.bind(s, e[0])], e[1]]))
+            .reduce((a,b) => a.concat(b), []);
+        const matchText = ":"+match[2], matchStart = match.index + match[1].length;
+
+        return {completions, matchText, matchStart};
+    }
+
+    function getCompletionsTwitch(emoteSets, text) {
+        const match = text.match(/(^|\s)(\w{3,})$/);
+        if (match === null) {
+            return {completions: [], matchText: null, matchStart: -1};
+        }
+
+        const completions = emoteSets
+            .filter(s => s.emoteStyle === EmoteSet.emoteStyle.TWITCH)
+            .map(s => s.search(match[2]).map(e => [[e[0], s.createEmote.bind(s, e[0])], e[1]]))
+            .reduce((a,b) => a.concat(b), []);
+        const matchText = match[2], matchStart = match.index + match[1].length;
+
+        return {completions, matchText, matchStart};
+    }
+
+    const emoteComparator = (function () {
+        const compare = new Intl.Collator(undefined, {
+            usage: "sort",
+            sensitivity: "base",
+            numeric: true,
+        }).compare;
+
+        return (a,b) => ((a[1]===b[1]) ? compare(a[0],b[0]) : (a[1]-b[1]));
+    })();
+
+    function getCompletions(emoteSets, text) {
+        let {completions, matchText, matchStart} = getCompletionsStandard(emoteSets, text);
+        if (matchStart === -1) {
+            ({completions, matchText, matchStart} = getCompletionsTwitch(emoteSets, text));
+        }
+
+        completions = completions
+            .sort(emoteComparator)
+            .map(e => e[0]);
+
+        return {completions, matchText, matchStart};
+    }
+
+    // Set up event handlers
+    function startTabComplete(emoteSets) {
+        // Cached information about possible completions
+        // Conflicts should be avoidable, as this is cleared on focus loss
+        let cached = {};
+
+        let textarea;
+
+        const shouldCompleteStandard = RegExp.prototype.test.bind(/(?:^|\s):\w{2,}$/);
+
+        const shouldCompleteTwitch = RegExp.prototype.test.bind(/(?:^|\s)\w{3,}$/);
+
+        const shouldComplete = RegExp.prototype.test.bind(/(?:^|\s)(?:\w|:)\w{2,}$/);
+
+        // Show possible completions
+        let renderCompletions = _.debounce(function () {
+            const channelTextarea = $(textarea).closest(".channel-textarea");
+            const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
+
+            const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+            if (!shouldComplete(candidateText) || !prepareCompletions()) {
+                oldAutocomplete.remove();
+                return;
+            }
+
+            const {completions, matchText, selectedIndex} = cached;
+
+            const firstIndex = Math.max(0, Math.min(selectedIndex-2, completions.length-10));
+            const matchList = completions.slice(firstIndex, firstIndex+10);
+
+            const autocomplete = $("<div>", {
+                "class": "channel-textarea-autocomplete kawaii-autocomplete",
+                css: {display: "block"},
+            });
+            const autocompleteInner = $("<div>", {"class": "channel-textarea-autocomplete-inner"})
+                .appendTo(autocomplete);
+            $("<header>")
+                .append($("<div>", {text: "Emotes matching "}).append($("<strong>", {text: matchText})))
+                .appendTo(autocompleteInner);
+            $("<ul>")
+                .append(matchList.map((e,i) => {
+                    let li = $("<li>", {text: e[0]}).prepend(e[1]());
+                    if (i+firstIndex === selectedIndex) {
+                        li.addClass("active");
+                    }
+                    li.on("mouseenter.kawaii-complete", e => {
+                        cached.selectedIndex = i+firstIndex;
+                        li.siblings(".active").removeClass("active");
+                        li.addClass("active");
+                    }).on("mousedown.kawaii-complete", e => {
+                        cached.selectedIndex = i+firstIndex;
+                        insertSelectedCompletion();
+                    });
+                    return li;
+                }))
+                .appendTo(autocompleteInner);
+
+            oldAutocomplete.remove();
+
+            channelTextarea
+                .append(autocomplete);
+        }, 250);
+
+        function prepareCompletions() {
+            const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+            const {candidateText: lastText} = cached;
+
+            if (lastText !== candidateText) {
+                const {completions, matchText, matchStart} = getCompletions(emoteSets, candidateText);
+                cached = {candidateText, completions, matchText, matchStart, selectedIndex: 0};
+            }
+
+            const {completions} = cached;
+            return (completions !== undefined && completions.length !== 0);
+        }
+
+        function destroyCompletions() {
+            const channelTextarea = $(textarea).closest(".channel-textarea");
+            const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
+            oldAutocomplete.remove();
+            cached = {};
+            renderCompletions.cancel();
+        }
+
+        // Insert selected completion at cursor position
+        function insertSelectedCompletion() {
+            const {completions, matchStart, selectedIndex} = cached;
+
+            if (completions === undefined) {
+                return;
+            }
+
+            const left = textarea.value.slice(0, matchStart) + completions[selectedIndex][0] + " ";
+            const right = textarea.value.slice(textarea.selectionEnd);
+
+            textarea.value = left + right;
+            textarea.selectionStart = textarea.selectionEnd = left.length;
+
+            destroyCompletions();
+        }
+
+        // Check for matches (overrides TextareaAutosize's onClick, onKeyPress, onKeyUp, maybeShowAutocomplete)
+        function checkCompletions(e) {
+            /* jshint validthis: true */
+            textarea = this;
+
+            const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+
+            // If an emote match is impossible, don't override default behavior.
+            // This allows other completion types (like usernames or channels) to work as usual.
+            if (!shouldComplete(candidateText)) {
+                destroyCompletions();
+                return;
+            }
+
+            // Don't override enter when there are no actual completions.
+            // This allows message sending to work as usual.
+            if (e.which === 13) {
+                // Only potentially override enter for standard-style emotes
+                if (!shouldCompleteStandard(candidateText)) {
+                    return;
+                }
+
+                if (!prepareCompletions()) {
+                    return;
+                }
+            }
+
+            // For any other key, always override, even when there are no actual completions.
+            // This prevents Discord's emoji autocompletion from kicking in intermittently.
+            e.stopPropagation();
+
+            renderCompletions();
+        }
+
+        // Browse or insert matches (overrides ChannelTextArea's onKeyDown)
+        function browseCompletions(e) {
+            /* jshint validthis: true */
+            textarea = this;
+
+            const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+            if (!shouldComplete(candidateText)) {
+                return;
+            }
+
+            switch (e.which) {
+                // Enter
+                case 13:
+                    if (!shouldCompleteStandard(candidateText)) {
+                        break;
+                    }
+                    /* falls through */
+                // Tab
+                case 9:
+
+                    if (!prepareCompletions()) {
+                        break;
+                    }
+
+                    // Prevent Discord's default behavior (send message)
+                    e.stopPropagation();
+                    // Prevent adding a tab or line break to text
+                    e.preventDefault();
+
+                    insertSelectedCompletion();
+                    break;
+
+                // Up
+                case 38:
+
+                    if (!prepareCompletions()) {
+                        break;
+                    } else {
+                        const {completions, selectedIndex} = cached;
+                        cached.selectedIndex = (selectedIndex - 1 + completions.length) % completions.length;
+                    }
+
+                    // Prevent Discord's default behavior (edit)
+                    e.stopPropagation();
+                    // Prevent cursor movement
+                    e.preventDefault();
+
+                    renderCompletions();
+                    renderCompletions.flush();
+                    break;
+
+                // Down
+                case 40:
+
+                    if (!prepareCompletions()) {
+                        break;
+                    } else {
+                        const {completions, selectedIndex} = cached;
+                        cached.selectedIndex = (selectedIndex + 1) % completions.length;
+                    }
+
+                    // Prevent Discord's default behavior
+                    e.stopPropagation();
+                    // Prevent cursor movement
+                    e.preventDefault();
+
+                    renderCompletions();
+                    renderCompletions.flush();
+                    break;
+            }
+        }
+
+        // Check for matches
+        $(".app").on({
+            "keyup.kawaii-complete keypress.kawaii-complete click.kawaii-complete": checkCompletions,
+            "keydown.kawaii-complete": browseCompletions,
+            "blur.kawaii-complete": destroyCompletions,
+        }, ".channel-textarea textarea");
+    }
+
+    // Tear down event handlers and clean up
+    function stopTabComplete() {
+        $(".app").off(".kawaii-complete", ".channel-textarea textarea");
+    }
 
     // Filter function for "Twitch-style" emotes, to avoid collisions with common words
     // Check if at least 4 word characters
@@ -892,13 +1180,11 @@ var kawaiiemotes = function () {};
         }
     }
 
-    var activeEmoteSets = [];
+    const activeEmoteSets = [];
 
     // Settings updated, rebuild active emote sets and rescan for emotes if necessary
     function updateSettings() {
-        var oldEmoteSets = activeEmoteSets.slice();
-
-        activeEmoteSets = [];
+        const oldEmoteSets = activeEmoteSets.splice(0);
 
         if (settingsCookie["bda-es-7"]) {
             activeEmoteSets.push(twitchEmotes);
@@ -1021,6 +1307,8 @@ var kawaiiemotes = function () {};
         bttvLegacyEmotes.load({success: parseEmoteSetIfActive});
         ffzEmotes.load({success: parseEmoteSetIfActive});
         ffzLegacyEmotes.load({success: parseEmoteSetIfActive});
+
+        startTabComplete(activeEmoteSets);
     };
 
     kawaiiemotes.prototype.stop = function () {
@@ -1030,6 +1318,8 @@ var kawaiiemotes = function () {};
         SettingsPanel.prototype.updateSettings = SettingsPanel.prototype.oldUpdateSettings;
 
         revertEmotes();
+
+        stopTabComplete();
     };
 
     kawaiiemotes.prototype.getSettingsPanel = function () {
