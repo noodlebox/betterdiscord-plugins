@@ -459,7 +459,7 @@ var kawaiiemotes = function () {};
                 var loaded = 0;
                 var skipped = 0;
                 data.emoticons.forEach(function (emoticon) {
-                    if (emoticon.emoticon_set !== 0 && emoteFilter(emoticon.code)) {
+                    if (emoticon.emoticon_set !== null && emoteFilter(emoticon.code)) {
                         self.emoteMap.set(emoticon.code, emoticon.id);
                         loaded++;
                     } else {
