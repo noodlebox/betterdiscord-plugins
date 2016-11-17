@@ -132,7 +132,10 @@ var kawaiiemotes = function () {};
 
         const completions = emoteSets
             .filter(s => s.emoteStyle === EmoteSet.emoteStyle.TWITCH)
-            .map(s => s.search(match[2]).map(e => [[e[0], s.createEmote.bind(s, e[0])], e[1]]))
+            .map(s => s.search(match[2])
+                    .filter(e => $.inArray(e[0], bemotes) === -1)
+                    .map(e => [[e[0], s.createEmote.bind(s, e[0])], e[1]])
+                    )
             .reduce((a,b) => a.concat(b), []);
         const matchText = match[2], matchStart = match.index + match[1].length;
 
