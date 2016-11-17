@@ -196,7 +196,7 @@ var kawaiiemotes = function () {};
             const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
 
             const candidateText = textarea.value.slice(0, textarea.selectionEnd);
-            if (!shouldComplete(candidateText) || !prepareCompletions()) {
+            if (!shouldCompleteTwitch(candidateText) || !prepareCompletions()) {
                 oldAutocomplete.remove();
                 return;
             }
@@ -317,7 +317,7 @@ var kawaiiemotes = function () {};
 
             // If an emote match is impossible, don't override default behavior.
             // This allows other completion types (like usernames or channels) to work as usual.
-            if (!shouldComplete(candidateText)) {
+            if (!shouldCompleteTwitch(candidateText)) {
                 destroyCompletions();
                 return;
             }
@@ -325,10 +325,7 @@ var kawaiiemotes = function () {};
             // Don't override enter when there are no actual completions.
             // This allows message sending to work as usual.
             if (e.which === 13) {
-                // Only potentially override enter for standard-style emotes
-                if (!shouldCompleteStandard(candidateText) || !prepareCompletions()) {
-                    return;
-                }
+                return;
             }
 
             // For any other key, always override, even when there are no actual completions.
@@ -346,19 +343,13 @@ var kawaiiemotes = function () {};
             textarea = this;
 
             const candidateText = textarea.value.slice(0, textarea.selectionEnd);
-            if (!shouldComplete(candidateText)) {
+            if (!shouldCompleteTwitch(candidateText)) {
                 return;
             }
 
             let delta = 0, options;
 
             switch (e.which) {
-                // Enter
-                case 13:
-                    if (!shouldCompleteStandard(candidateText)) {
-                        break;
-                    }
-                    /* falls through */
                 // Tab
                 case 9:
 
