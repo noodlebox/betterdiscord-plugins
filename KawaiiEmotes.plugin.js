@@ -173,6 +173,8 @@ var kawaiiemotes = function () {};
 
         let textarea;
 
+        const windowSize = 10, preScroll = 2;
+
         const shouldCompleteStandard = RegExp.prototype.test.bind(/(?:^|\s):\w{2,}$/);
 
         const shouldCompleteTwitch = RegExp.prototype.test.bind(/(?:^|\s)\w{3,}$/);
@@ -190,16 +192,16 @@ var kawaiiemotes = function () {};
                 return;
             }
 
-            const {completions, matchText, selectedIndex} = cached;
+            const {completions, matchText, selectedIndex, windowOffset: firstIndex} = cached;
 
-            const firstIndex = Math.max(0, Math.min(selectedIndex-2, completions.length-10));
-            const matchList = completions.slice(firstIndex, firstIndex+10);
+            const matchList = completions.slice(firstIndex, firstIndex+windowSize);
 
             const autocomplete = $("<div>", {
                 "class": "channel-textarea-autocomplete kawaii-autocomplete",
                 css: {display: "block"},
             });
             const autocompleteInner = $("<div>", {"class": "channel-textarea-autocomplete-inner"})
+                .on("wheel.kawaii-complete", _.partial(scrollCompletions, _, {locked: true}))
                 .appendTo(autocomplete);
             $("<header>")
                 .append($("<div>", {text: "Emotes matching "}).append($("<strong>", {text: matchText})))
@@ -228,13 +230,41 @@ var kawaiiemotes = function () {};
                 .append(autocomplete);
         }, 250);
 
+        // Scroll through the "window" of completions
+        function scrollWindow(delta, {locked=false, clamped=false} = {}) {
+            const {completions, selectedIndex: prevSel, windowOffset} = cached;
+
+            if (completions === undefined || completions.length === 0) {
+                return;
+            }
+
+            // Change selected index
+            const num = completions.length;
+            let sel = prevSel + delta;
+            if (clamped) {
+                sel = _.clamp(sel, 0, num-1);
+            } else {
+                sel = (sel % num) + (sel<0 ? num : 0);
+            }
+            cached.selectedIndex = sel;
+
+            // Clamp window position to bounds based on new selected index
+            const boundLower = _.clamp(sel + preScroll - (windowSize-1), 0, num-windowSize);
+            const boundUpper = _.clamp(sel - preScroll, 0, num-windowSize);
+            cached.windowOffset = _.clamp(windowOffset + (locked ? delta : 0), boundLower, boundUpper);
+
+            // Render immediately
+            renderCompletions();
+            renderCompletions.flush();
+        }
+
         function prepareCompletions() {
             const candidateText = textarea.value.slice(0, textarea.selectionEnd);
             const {candidateText: lastText} = cached;
 
             if (lastText !== candidateText) {
                 const {completions, matchText, matchStart} = getCompletions(emoteSets, candidateText);
-                cached = {candidateText, completions, matchText, matchStart, selectedIndex: 0};
+                cached = {candidateText, completions, matchText, matchStart, selectedIndex: 0, windowOffset: 0};
             }
 
             const {completions} = cached;
@@ -272,6 +302,7 @@ var kawaiiemotes = function () {};
             textarea = this;
 
             const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+            const {candidateText: lastText} = cached;
 
             // If an emote match is impossible, don't override default behavior.
             // This allows other completion types (like usernames or channels) to work as usual.
@@ -284,11 +315,7 @@ var kawaiiemotes = function () {};
             // This allows message sending to work as usual.
             if (e.which === 13) {
                 // Only potentially override enter for standard-style emotes
-                if (!shouldCompleteStandard(candidateText)) {
-                    return;
-                }
-
-                if (!prepareCompletions()) {
+                if (!shouldCompleteStandard(candidateText) || !prepareCompletions()) {
                     return;
                 }
             }
@@ -297,7 +324,9 @@ var kawaiiemotes = function () {};
             // This prevents Discord's emoji autocompletion from kicking in intermittently.
             e.stopPropagation();
 
-            renderCompletions();
+            if (lastText !== candidateText) {
+                renderCompletions();
+            }
         }
 
         // Browse or insert matches (overrides ChannelTextArea's onKeyDown)
@@ -309,6 +338,8 @@ var kawaiiemotes = function () {};
             if (!shouldComplete(candidateText)) {
                 return;
             }
+
+            let delta = 0, options;
 
             switch (e.which) {
                 // Enter
@@ -334,48 +365,49 @@ var kawaiiemotes = function () {};
 
                 // Up
                 case 38:
-
-                    if (!prepareCompletions()) {
-                        break;
-                    } else {
-                        const {completions, selectedIndex} = cached;
-                        cached.selectedIndex = (selectedIndex - 1 + completions.length) % completions.length;
-                    }
-
-                    // Prevent Discord's default behavior (edit)
-                    e.stopPropagation();
-                    // Prevent cursor movement
-                    e.preventDefault();
-
-                    renderCompletions();
-                    renderCompletions.flush();
+                    delta = -1;
                     break;
 
                 // Down
                 case 40:
+                    delta = 1;
+                    break;
 
-                    if (!prepareCompletions()) {
-                        break;
-                    } else {
-                        const {completions, selectedIndex} = cached;
-                        cached.selectedIndex = (selectedIndex + 1) % completions.length;
-                    }
+                // Page Up
+                case 33:
+                    delta = -windowSize;
+                    options = {locked: true, clamped: true};
+                    break;
 
-                    // Prevent Discord's default behavior
-                    e.stopPropagation();
-                    // Prevent cursor movement
-                    e.preventDefault();
-
-                    renderCompletions();
-                    renderCompletions.flush();
+                // Page Down
+                case 34:
+                    delta = windowSize;
+                    options = {locked: true, clamped: true};
                     break;
             }
+
+            if (delta !== 0 && prepareCompletions()) {
+                // Prevent Discord's default behavior
+                e.stopPropagation();
+                // Prevent cursor movement
+                e.preventDefault();
+
+                scrollWindow(delta, options);
+            }
+        }
+
+        // Scroll matches
+        function scrollCompletions(e, options) {
+            /* jshint validthis: true */
+            const delta = Math.sign(e.originalEvent.deltaY);
+            scrollWindow(delta, options);
         }
 
         // Check for matches
         $(".app").on({
             "keyup.kawaii-complete keypress.kawaii-complete click.kawaii-complete": checkCompletions,
             "keydown.kawaii-complete": browseCompletions,
+            "wheel.kawaii-complete": scrollCompletions,
             "blur.kawaii-complete": destroyCompletions,
         }, ".channel-textarea textarea");
     }
