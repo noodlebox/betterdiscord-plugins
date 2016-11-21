@@ -1335,7 +1335,7 @@ var kawaiiemotes = function () {};
     //   completionsPreScroll
     //     minimum number of nearby items to show next to selected item when scrolling
 
-    var settings, defaultSettings = {
+    var settings = {}, defaultSettings = {
         forceJumbo: false,
         allowWide: false,
         highDpi: false,
@@ -1358,15 +1358,15 @@ var kawaiiemotes = function () {};
     }
 
     kawaiiemotes.prototype.load = function () {
-        initJQueryPlugins($);
-        settings = localSettings();
     };
 
     kawaiiemotes.prototype.unload = function () {
-        localSettings(settings);
     };
 
     kawaiiemotes.prototype.start = function () {
+        initJQueryPlugins($);
+        settings = localSettings();
+
         // Save these to be restored later
         EmoteModule.prototype.oldObsCallback = EmoteModule.prototype.obsCallback;
         SettingsPanel.prototype.oldInit = SettingsPanel.prototype.init;
@@ -1405,6 +1405,8 @@ var kawaiiemotes = function () {};
         revertEmotes();
 
         stopTabComplete();
+
+        localSettings(settings);
     };
 
     kawaiiemotes.prototype.getSettingsPanel = function () {
