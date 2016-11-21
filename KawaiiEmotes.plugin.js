@@ -166,14 +166,23 @@ var kawaiiemotes = function () {};
     }
 
     // Set up event handlers
-    function startTabComplete(emoteSets) {
+    function startTabComplete(emoteSets, options={}) {
         // Cached information about possible completions
         // Conflicts should be avoidable, as this is cleared on focus loss
         let cached = {};
 
         let textarea;
 
-        const windowSize = 10, preScroll = 2;
+        const {
+            completionsMenu: showMenu=true,
+            completionsDelay: delay=250,
+            completionsWindowSize: windowSize=10,
+            completionsPreScroll: preScroll=2
+        } = options;
+
+        if (!showMenu) {
+            return;
+        }
 
         const shouldCompleteStandard = RegExp.prototype.test.bind(/(?:^|\s):\w{2,}$/);
 
@@ -230,7 +239,7 @@ var kawaiiemotes = function () {};
 
             channelTextarea
                 .append(autocomplete);
-        }, 250);
+        }, delay);
 
         // Scroll through the "window" of completions
         function scrollWindow(delta, {locked=false, clamped=false} = {}) {
@@ -1287,11 +1296,20 @@ var kawaiiemotes = function () {};
     //   highDpi
     //     false - always use the base emote size
     //     true  - use srcset to specify high-DPI versions
+    //   completionsMenu
+    //     true  - show tab-completion menu for "Twitch-style" emotes
+    //   completionsDelay
+    //     delay (ms) after typing has stopped before searching for completions
+    //   completionsWindowSize
+    //     maximum number of completions to show, and number of items to scroll on Page Up/Down
+    //   completionsPreScroll
+    //     minimum number of nearby items to show next to selected item when scrolling
 
     var settings, defaultSettings = {
         forceJumbo: false,
         allowWide: false,
         highDpi: false,
+        completionsMenu: true,
     };
 
     // Load or store settings from localStorage
@@ -1345,7 +1363,7 @@ var kawaiiemotes = function () {};
         ffzEmotes.load({success: parseEmoteSetIfActive});
         ffzLegacyEmotes.load({success: parseEmoteSetIfActive});
 
-        startTabComplete(activeEmoteSets);
+        startTabComplete(activeEmoteSets, settings);
     };
 
     kawaiiemotes.prototype.stop = function () {
@@ -1361,6 +1379,25 @@ var kawaiiemotes = function () {};
 
     kawaiiemotes.prototype.getSettingsPanel = function () {
         var panel = topPanel();
+
+        var completionControls = controlGroups().appendTo(panel);
+
+        var completionMainControl = controlGroup({label: "Tab-completion"})
+            .appendTo(completionControls)
+            .append(checkboxGroup({
+                callback: state => {
+                    localSettings(settings);
+                    stopTabComplete();
+                    startTabComplete(activeEmoteSets, settings);
+                },
+                items: [
+                    {
+                        label: "Show tab-completion menu for BetterDiscord emotes.",
+                        checked: settings.completionsMenu,
+                        callback: state => { settings.completionsMenu = state; },
+                    },
+                ],
+            }));
 
         var appearanceControls = controlGroups().appendTo(panel);
 
