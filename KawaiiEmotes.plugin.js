@@ -117,6 +117,331 @@ var kawaiiemotes = function () {};
         }
         return emote;
     };
+    EmoteSet.prototype.search = function (query) {
+        const score = function (name, query) {
+            name = name.toLowerCase();
+            query = query.toLowerCase();
+            const d = name.length - query.length;
+            const i = name.indexOf(query);
+            if (i === -1) {
+                return 0;
+            }
+            return 1 + (i+1)*(d-i+2);
+        };
+        return [...this.emoteMap.keys()]
+            .map(e => [e, score(e, query)])
+            .filter(e => e[1] !== 0);
+    };
+
+    function getCompletionsStandard(emoteSets, text) {
+        const match = text.match(/(^|\s):(\w{2,})$/);
+        if (match === null) {
+            return {completions: [], matchText: null, matchStart: -1};
+        }
+
+        const completions = emoteSets
+            .filter(s => s.emoteStyle === EmoteSet.emoteStyle.STANDARD)
+            .map(s => s.search(match[2]).map(e => [[":"+e[0]+":", s.createEmote.bind(s, e[0])], e[1]]))
+            .reduce((a,b) => a.concat(b), []);
+        const matchText = ":"+match[2], matchStart = match.index + match[1].length;
+
+        return {completions, matchText, matchStart};
+    }
+
+    function getCompletionsTwitch(emoteSets, text) {
+        const match = text.match(/(^|\s)(\w{3,})$/);
+        if (match === null) {
+            return {completions: [], matchText: null, matchStart: -1};
+        }
+
+        const completions = emoteSets
+            .filter(s => s.emoteStyle === EmoteSet.emoteStyle.TWITCH)
+            .map(s => s.search(match[2])
+                    .filter(e => $.inArray(e[0], bemotes) === -1)
+                    .map(e => [[e[0], s.createEmote.bind(s, e[0])], e[1]])
+                    )
+            .reduce((a,b) => a.concat(b), []);
+        const matchText = match[2], matchStart = match.index + match[1].length;
+
+        return {completions, matchText, matchStart};
+    }
+
+    const emoteComparator = (function () {
+        const compare = new Intl.Collator(undefined, {
+            usage: "sort",
+            sensitivity: "base",
+            numeric: true,
+        }).compare;
+
+        return (a,b) => ((a[1]===b[1]) ? compare(a[0],b[0]) : (a[1]-b[1]));
+    })();
+
+    function getCompletions(emoteSets, text) {
+        let {completions, matchText, matchStart} = getCompletionsStandard(emoteSets, text);
+        if (matchStart === -1) {
+            ({completions, matchText, matchStart} = getCompletionsTwitch(emoteSets, text));
+        }
+
+        completions = completions
+            .sort(emoteComparator)
+            .map(e => e[0]);
+
+        return {completions, matchText, matchStart};
+    }
+
+    // Set up event handlers
+    function startTabComplete(emoteSets, options={}) {
+        // Cached information about possible completions
+        // Conflicts should be avoidable, as this is cleared on focus loss
+        let cached = {};
+
+        let textarea;
+
+        const {
+            completionsMenu: showMenu=true,
+            completionsDelay: delay=250,
+            completionsWindowSize: windowSize=10,
+            completionsPreScroll: preScroll=2
+        } = options;
+
+        if (!showMenu) {
+            return;
+        }
+
+        const shouldCompleteStandard = RegExp.prototype.test.bind(/(?:^|\s):\w{2,}$/);
+
+        const shouldCompleteTwitch = RegExp.prototype.test.bind(/(?:^|\s)\w{3,}$/);
+
+        const shouldComplete = RegExp.prototype.test.bind(/(?:^|\s)(?:\w|:)\w{2,}$/);
+
+        // Show possible completions
+        let renderCompletions = _.debounce(function () {
+            const channelTextarea = $(textarea).closest(".channel-textarea");
+            const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
+
+            const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+            if (!shouldCompleteTwitch(candidateText) || !prepareCompletions()) {
+                oldAutocomplete.remove();
+                return;
+            }
+
+            const {completions, matchText, selectedIndex, windowOffset: firstIndex} = cached;
+
+            const matchList = completions.slice(firstIndex, firstIndex+windowSize);
+
+            const autocomplete = $("<div>", {
+                "class": "channel-textarea-autocomplete kawaii-autocomplete",
+                css: {display: "block"},
+            });
+            const autocompleteInner = $("<div>", {"class": "channel-textarea-autocomplete-inner"})
+                .on("wheel.kawaii-complete", _.partial(scrollCompletions, _, {locked: true}))
+                .appendTo(autocomplete);
+            $("<header>")
+                .append($("<div>", {text: "Emotes matching "}).append($("<strong>", {text: matchText})))
+                .appendTo(autocompleteInner);
+            $("<ul>")
+                .append(matchList.map((e,i) => {
+                    let li = $("<li>", {text: e[0]}).prepend(e[1]());
+                    if (i+firstIndex === selectedIndex) {
+                        li.addClass("active");
+                    }
+                    li.on("mouseenter.kawaii-complete", e => {
+                        cached.selectedIndex = i+firstIndex;
+                        li.siblings(".active").removeClass("active");
+                        li.addClass("active");
+                    }).on("mousedown.kawaii-complete", e => {
+                        cached.selectedIndex = i+firstIndex;
+                        insertSelectedCompletion();
+                        // Prevent loss of focus
+                        e.preventDefault();
+                    });
+                    return li;
+                }))
+                .appendTo(autocompleteInner);
+
+            oldAutocomplete.remove();
+
+            channelTextarea
+                .append(autocomplete);
+        }, delay);
+
+        // Scroll through the "window" of completions
+        function scrollWindow(delta, {locked=false, clamped=false} = {}) {
+            const {completions, selectedIndex: prevSel, windowOffset} = cached;
+
+            if (completions === undefined || completions.length === 0) {
+                return;
+            }
+
+            // Change selected index
+            const num = completions.length;
+            let sel = prevSel + delta;
+            if (clamped) {
+                sel = _.clamp(sel, 0, num-1);
+            } else {
+                sel = (sel % num) + (sel<0 ? num : 0);
+            }
+            cached.selectedIndex = sel;
+
+            // Clamp window position to bounds based on new selected index
+            const boundLower = _.clamp(sel + preScroll - (windowSize-1), 0, num-windowSize);
+            const boundUpper = _.clamp(sel - preScroll, 0, num-windowSize);
+            cached.windowOffset = _.clamp(windowOffset + (locked ? delta : 0), boundLower, boundUpper);
+
+            // Render immediately
+            renderCompletions();
+            renderCompletions.flush();
+        }
+
+        function prepareCompletions() {
+            const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+            const {candidateText: lastText} = cached;
+
+            if (lastText !== candidateText) {
+                const {completions, matchText, matchStart} = getCompletions(emoteSets, candidateText);
+                cached = {candidateText, completions, matchText, matchStart, selectedIndex: 0, windowOffset: 0};
+            }
+
+            const {completions} = cached;
+            return (completions !== undefined && completions.length !== 0);
+        }
+
+        function destroyCompletions() {
+            const channelTextarea = $(textarea).closest(".channel-textarea");
+            const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
+            oldAutocomplete.remove();
+            cached = {};
+            renderCompletions.cancel();
+        }
+
+        // Insert selected completion at cursor position
+        function insertSelectedCompletion() {
+            const {completions, matchStart, selectedIndex} = cached;
+
+            if (completions === undefined) {
+                return;
+            }
+
+            const left = textarea.value.slice(0, matchStart) + completions[selectedIndex][0] + " ";
+            const right = textarea.value.slice(textarea.selectionEnd);
+
+            textarea.value = left + right;
+            textarea.selectionStart = textarea.selectionEnd = left.length;
+
+            destroyCompletions();
+        }
+
+        // Check for matches (overrides TextareaAutosize's onClick, onKeyPress, onKeyUp, maybeShowAutocomplete)
+        function checkCompletions(e) {
+            /* jshint validthis: true */
+            textarea = this;
+
+            const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+            const {candidateText: lastText} = cached;
+
+            // If an emote match is impossible, don't override default behavior.
+            // This allows other completion types (like usernames or channels) to work as usual.
+            if (!shouldCompleteTwitch(candidateText)) {
+                destroyCompletions();
+                return;
+            }
+
+            // Don't override enter when there are no actual completions.
+            // This allows message sending to work as usual.
+            if (e.which === 13) {
+                return;
+            }
+
+            // For any other key, always override, even when there are no actual completions.
+            // This prevents Discord's emoji autocompletion from kicking in intermittently.
+            e.stopPropagation();
+
+            if (lastText !== candidateText) {
+                renderCompletions();
+            }
+        }
+
+        // Browse or insert matches (overrides ChannelTextArea's onKeyDown)
+        function browseCompletions(e) {
+            /* jshint validthis: true */
+            textarea = this;
+
+            const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+            if (!shouldCompleteTwitch(candidateText)) {
+                return;
+            }
+
+            let delta = 0, options;
+
+            switch (e.which) {
+                // Tab
+                case 9:
+
+                    if (!prepareCompletions()) {
+                        break;
+                    }
+
+                    // Prevent Discord's default behavior (send message)
+                    e.stopPropagation();
+                    // Prevent adding a tab or line break to text
+                    e.preventDefault();
+
+                    insertSelectedCompletion();
+                    break;
+
+                // Up
+                case 38:
+                    delta = -1;
+                    break;
+
+                // Down
+                case 40:
+                    delta = 1;
+                    break;
+
+                // Page Up
+                case 33:
+                    delta = -windowSize;
+                    options = {locked: true, clamped: true};
+                    break;
+
+                // Page Down
+                case 34:
+                    delta = windowSize;
+                    options = {locked: true, clamped: true};
+                    break;
+            }
+
+            if (delta !== 0 && prepareCompletions()) {
+                // Prevent Discord's default behavior
+                e.stopPropagation();
+                // Prevent cursor movement
+                e.preventDefault();
+
+                scrollWindow(delta, options);
+            }
+        }
+
+        // Scroll matches
+        function scrollCompletions(e, options) {
+            /* jshint validthis: true */
+            const delta = Math.sign(e.originalEvent.deltaY);
+            scrollWindow(delta, options);
+        }
+
+        // Check for matches
+        $(".app").on({
+            "keyup.kawaii-complete keypress.kawaii-complete click.kawaii-complete": checkCompletions,
+            "keydown.kawaii-complete": browseCompletions,
+            "wheel.kawaii-complete": scrollCompletions,
+            "blur.kawaii-complete": destroyCompletions,
+        }, ".channel-textarea textarea");
+    }
+
+    // Tear down event handlers and clean up
+    function stopTabComplete() {
+        $(".app").off(".kawaii-complete", ".channel-textarea textarea");
+    }
 
     // Filter function for "Twitch-style" emotes, to avoid collisions with common words
     // Check if at least 4 word characters
@@ -192,7 +517,7 @@ var kawaiiemotes = function () {};
                 var loaded = 0;
                 var skipped = 0;
                 data.emoticons.forEach(function (emoticon) {
-                    if (emoticon.emoticon_set !== 0 && emoteFilter(emoticon.code)) {
+                    if (emoticon.emoticon_set !== null && emoteFilter(emoticon.code)) {
                         self.emoteMap.set(emoticon.code, emoticon.id);
                         loaded++;
                     } else {
@@ -931,13 +1256,11 @@ var kawaiiemotes = function () {};
         }
     }
 
-    var activeEmoteSets = [];
+    const activeEmoteSets = [];
 
     // Settings updated, rebuild active emote sets and rescan for emotes if necessary
     function updateSettings() {
-        var oldEmoteSets = activeEmoteSets.slice();
-
-        activeEmoteSets = [];
+        const oldEmoteSets = activeEmoteSets.splice(0);
 
         if (settingsCookie["bda-es-7"]) {
             activeEmoteSets.push(twitchEmotes);
@@ -1003,11 +1326,20 @@ var kawaiiemotes = function () {};
     //   highDpi
     //     false - always use the base emote size
     //     true  - use srcset to specify high-DPI versions
+    //   completionsMenu
+    //     true  - show tab-completion menu for "Twitch-style" emotes
+    //   completionsDelay
+    //     delay (ms) after typing has stopped before searching for completions
+    //   completionsWindowSize
+    //     maximum number of completions to show, and number of items to scroll on Page Up/Down
+    //   completionsPreScroll
+    //     minimum number of nearby items to show next to selected item when scrolling
 
     var settings, defaultSettings = {
         forceJumbo: false,
         allowWide: false,
         highDpi: false,
+        completionsMenu: true,
     };
 
     // Load or store settings from localStorage
@@ -1060,6 +1392,8 @@ var kawaiiemotes = function () {};
         bttvLegacyEmotes.load({success: parseEmoteSetIfActive});
         ffzEmotes.load({success: parseEmoteSetIfActive});
         ffzLegacyEmotes.load({success: parseEmoteSetIfActive});
+
+        startTabComplete(activeEmoteSets, settings);
     };
 
     kawaiiemotes.prototype.stop = function () {
@@ -1069,10 +1403,31 @@ var kawaiiemotes = function () {};
         SettingsPanel.prototype.updateSettings = SettingsPanel.prototype.oldUpdateSettings;
 
         revertEmotes();
+
+        stopTabComplete();
     };
 
     kawaiiemotes.prototype.getSettingsPanel = function () {
         var panel = topPanel();
+
+        var completionControls = controlGroups().appendTo(panel);
+
+        var completionMainControl = controlGroup({label: "Tab-completion"})
+            .appendTo(completionControls)
+            .append(checkboxGroup({
+                callback: state => {
+                    localSettings(settings);
+                    stopTabComplete();
+                    startTabComplete(activeEmoteSets, settings);
+                },
+                items: [
+                    {
+                        label: "Show tab-completion menu for BetterDiscord emotes.",
+                        checked: settings.completionsMenu,
+                        callback: state => { settings.completionsMenu = state; },
+                    },
+                ],
+            }));
 
         var appearanceControls = controlGroups().appendTo(panel);
 
