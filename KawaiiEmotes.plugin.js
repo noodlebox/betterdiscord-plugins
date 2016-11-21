@@ -219,6 +219,8 @@ var kawaiiemotes = function () {};
                     }).on("mousedown.kawaii-complete", e => {
                         cached.selectedIndex = i+firstIndex;
                         insertSelectedCompletion();
+                        // Prevent loss of focus
+                        e.preventDefault();
                     });
                     return li;
                 }))
