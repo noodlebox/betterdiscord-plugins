@@ -668,10 +668,7 @@ var kawaiiemotes = function () {};
                     })) {
                         modified = true;
                         // Create a new text node from any previous text
-                        var text = nonEmote.join("");
-                        if (text.length > 0) {
-                            sub.push(document.createTextNode(text));
-                        }
+                        sub.push(document.createTextNode(nonEmote.join("")));
                         // Clear out stored words
                         nonEmote = [];
                         // Add the emote element
@@ -735,10 +732,7 @@ var kawaiiemotes = function () {};
                     })) {
                         modified = true;
                         // Create a new text node from any previous text
-                        var text = nonEmote.join("");
-                        if (text.length > 0) {
-                            sub.push(document.createTextNode(text));
-                        }
+                        sub.push(document.createTextNode(nonEmote.join("")));
                         // Clear out stored words
                         nonEmote = [];
                         // Apply any emote mods, if applicable
@@ -875,10 +869,6 @@ var kawaiiemotes = function () {};
         var messagesContainer = $(".messages");
         var atBottom = messagesContainer.scrollBottom() < 0.5;
 
-        // When a line is edited, Discord may stuff the new contents inside one of our emotes
-        messages.find(".kawaii-parseemotes").contents()
-            .parent().trigger("mouseout.fancyTooltip").end()
-            .unwrap();
         // Process messages
         messages.parseEmotes(sets, {allowWide: settings.allowWide});
         if (settingsCookie["bda-es-6"]) {
