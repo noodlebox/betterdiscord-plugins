@@ -207,6 +207,8 @@ var lineNumbers = function () {};
     }`;
 
     lineNumbers.prototype.start = function () {
+        settings = localSettings();
+
         if (!settings.noStyle) {
             BdApi.injectCSS("kawaii-linenumbers-css", css);
         }
@@ -227,7 +229,7 @@ var lineNumbers = function () {};
     //     false - add some simple CSS for styling line-numbered code blocks
     //     true  - leave styling up to themes or custom CSS
 
-    var settings, defaultSettings = {
+    var settings = {}, defaultSettings = {
         ignoreNoLanguage: false,
         noStyle: false,
     };
@@ -247,13 +249,9 @@ var lineNumbers = function () {};
         localStorage.lineNumbers = JSON.stringify(settings);
     }
 
-    lineNumbers.prototype.load = function () {
-        settings = localSettings();
-    };
+    lineNumbers.prototype.load = function () {};
 
-    lineNumbers.prototype.unload = function () {
-        localSettings(settings);
-    };
+    lineNumbers.prototype.unload = function () {};
 
     lineNumbers.prototype.stop = function () {
         BdApi.clearCSS("kawaii-linenumbers-css");
@@ -262,6 +260,8 @@ var lineNumbers = function () {};
             .children()
             .not(":last-child").append(document.createTextNode("\n")).end()
             .contents().unwrap().unwrap();
+
+        localSettings(settings);
     };
 
     lineNumbers.prototype.restart = function () {
