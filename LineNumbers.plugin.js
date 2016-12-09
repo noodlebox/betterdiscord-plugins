@@ -309,7 +309,7 @@ var lineNumbers = function () {};
     };
 
     lineNumbers.prototype.getVersion = function () {
-        return "1.1.1";
+        return "1.1.2";
     };
 
     lineNumbers.prototype.getAuthor = function () {
