@@ -83,7 +83,7 @@ var staticAvatars = function () {};
     }
 
     staticAvatars.prototype.start = function () {
-        $(".theme-dark").on("mouseenter.staticavatars", ".message-group", function () {
+        $(".theme-dark, .theme-light").on("mouseenter.staticavatars", ".message-group", function () {
             try {
                 getOwnerInstance(this, {include: ["MessageGroup"]}).setState({animate: false, animatedAvatar: false});
             } catch (err) {
@@ -93,7 +93,7 @@ var staticAvatars = function () {};
     };
 
     staticAvatars.prototype.stop = function () {
-        $(".theme-dark").off("mouseenter.staticavatars", ".message-group");
+        $(".theme-dark, .theme-light").off("mouseenter.staticavatars", ".message-group");
     };
 
     staticAvatars.prototype.load = function () {};
