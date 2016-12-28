@@ -138,7 +138,7 @@ var staticAvatars = function () {};
     };
 
     staticAvatars.prototype.getVersion = function () {
-        return "1.0.0";
+        return "1.0.1";
     };
 
     staticAvatars.prototype.getAuthor = function () {
