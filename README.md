@@ -12,6 +12,9 @@ Add line numbers to code blocks.
 ### OwnerTag.plugin.js
 Show a tag next to a server owner's name.
 
+### StaticAvatars.plugin.js
+Don't animate avatars in the chat area.
+
 ### KawaiiEmotes.plugin.js
 Better emote parsing for BetterDiscord. Fixes a few issues:
 
