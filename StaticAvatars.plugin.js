@@ -82,18 +82,47 @@ var staticAvatars = function () {};
         return null;
     }
 
+    // Mark elements with modified state so that they may be restored later
+    const animationDisabled = new WeakSet();
+
     staticAvatars.prototype.start = function () {
         $(".theme-dark, .theme-light").on("mouseenter.staticavatars", ".message-group", function () {
+            if (animationDisabled.has(this)) {
+                // This element has already been processed
+                // Don't trigger a pointless re-render with setState
+                return;
+            }
             try {
-                getOwnerInstance(this, {include: ["MessageGroup"]}).setState({animate: false, animatedAvatar: false});
+                const messageGroup = getOwnerInstance(this, {include: ["MessageGroup"]});
+                if (messageGroup.state.animatedAvatar) {
+                    animationDisabled.add(this);
+                    messageGroup.setState({animate: false, animatedAvatar: false});
+                }
             } catch (err) {
-                //console.error("DiscordStaticAvatars", err);
+                // Something (not surprisingly) broke, but this isn't critical enough to completely bail over
+                //console.error("DiscordStaticAvatars", this, err);
+                return;
             }
         });
     };
 
     staticAvatars.prototype.stop = function () {
-        $(".theme-dark, .theme-light").off("mouseenter.staticavatars", ".message-group");
+        $(".theme-dark, .theme-light").off(".staticavatars", ".message-group");
+        // Restore original state
+        $(".message-group").each(function () {
+            if (!animationDisabled.delete(this)) {
+                // This element's state was not modified
+                // Don't trigger a pointless re-render with setState
+                return;
+            }
+            try {
+                getOwnerInstance(this, {include: ["MessageGroup"]}).setState({animatedAvatar: true});
+            } catch (err) {
+                // Something (not surprisingly) broke, but this isn't critical enough to completely bail over
+                //console.error("DiscordStaticAvatars", this, err);
+                return;
+            }
+        });
     };
 
     staticAvatars.prototype.load = function () {};
