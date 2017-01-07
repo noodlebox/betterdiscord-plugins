@@ -133,7 +133,7 @@ var staticAvatars = function () {};
     };
 
     staticAvatars.prototype.getVersion = function () {
-        return "1.0.1";
+        return "1.0.2";
     };
 
     staticAvatars.prototype.getAuthor = function () {
