@@ -115,7 +115,7 @@ var hdAvatars = function () {};
 
     function unhookUser() {
         if (_.isNil(user) || _.isNil(getAvatarURL)) {
-            console.warn("HDAvatars", "user not hooked", err);
+            console.warn("HDAvatars", "user not hooked");
             return;
         }
         try {
