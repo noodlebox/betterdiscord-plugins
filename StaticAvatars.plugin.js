@@ -87,11 +87,6 @@ var staticAvatars = function () {};
 
     staticAvatars.prototype.start = function () {
         $(".theme-dark, .theme-light").on("mouseenter.staticavatars", ".message-group", function () {
-            if (animationDisabled.has(this)) {
-                // This element has already been processed
-                // Don't trigger a pointless re-render with setState
-                return;
-            }
             try {
                 const messageGroup = getOwnerInstance(this, {include: ["MessageGroup"]});
                 if (messageGroup.state.animatedAvatar) {
