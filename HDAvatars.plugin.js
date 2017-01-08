@@ -149,7 +149,7 @@ var hdAvatars = function () {};
     };
 
     hdAvatars.prototype.getVersion = function () {
-        return "0.1.0";
+        return "1.0.0";
     };
 
     hdAvatars.prototype.getAuthor = function () {
