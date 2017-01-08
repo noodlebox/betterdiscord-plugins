@@ -1479,7 +1479,7 @@ var kawaiiemotes = function () {};
     };
 
     kawaiiemotes.prototype.getVersion = function () {
-        return "0.4.0";
+        return "0.4.1";
     };
 
     kawaiiemotes.prototype.getAuthor = function () {
