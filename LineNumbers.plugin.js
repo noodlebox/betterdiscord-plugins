@@ -246,7 +246,11 @@ var lineNumbers = function () {};
             return $.extend({}, defaultSettings, localSettings);
         }
 
-        localStorage.lineNumbers = JSON.stringify(settings);
+        try {
+            localStorage.lineNumbers = JSON.stringify(settings);
+        } catch (err) {
+            console.warn("LineNumbers:", "unable to save settings:", err);
+        }
     }
 
     lineNumbers.prototype.load = function () {};

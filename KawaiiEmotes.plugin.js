@@ -1354,7 +1354,11 @@ var kawaiiemotes = function () {};
             return $.extend({}, defaultSettings, localSettings);
         }
 
-        localStorage.kawaiiemotes = JSON.stringify(settings);
+        try {
+            localStorage.kawaiiemotes = JSON.stringify(settings);
+        } catch (err) {
+            console.warn("KawaiiEmotes:", "unable to save settings:", err);
+        }
     }
 
     kawaiiemotes.prototype.load = function () {
