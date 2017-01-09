@@ -1346,16 +1346,28 @@ var kawaiiemotes = function () {};
     function localSettings(settings) {
         if (settings === undefined) {
             var localSettings;
+
             try {
-                localSettings = JSON.parse(localStorage.kawaiiemotes);
+                localSettings = bdPluginStorage.get("kawaiiemotes", "settings");
             } catch (err) {
-                localSettings = {};
+                console.warn("KawaiiEmotes:", "unable to load settings:", err);
+                localSettings = null;
+            }
+
+            if (localSettings === null) {
+                // try to fall back to localStorage
+                try {
+                    localSettings = JSON.parse(localStorage.kawaiiemotes);
+                } catch (err) {
+                    localSettings = {};
+                }
+                bdPluginStorage.set("kawaiiemotes", "settings", localSettings);
             }
             return $.extend({}, defaultSettings, localSettings);
         }
 
         try {
-            localStorage.kawaiiemotes = JSON.stringify(settings);
+            bdPluginStorage.set("kawaiiemotes", "settings", settings);
         } catch (err) {
             console.warn("KawaiiEmotes:", "unable to save settings:", err);
         }

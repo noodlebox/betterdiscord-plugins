@@ -238,16 +238,28 @@ var lineNumbers = function () {};
     function localSettings(settings) {
         if (settings === undefined) {
             var localSettings;
+
             try {
-                localSettings = JSON.parse(localStorage.lineNumbers);
+                localSettings = bdPluginStorage.get("lineNumbers", "settings");
             } catch (err) {
-                localSettings = {};
+                console.warn("LineNumbers:", "unable to load settings:", err);
+                localSettings = null;
+            }
+
+            if (localSettings === null) {
+                // try to fall back to localStorage
+                try {
+                    localSettings = JSON.parse(localStorage.lineNumbers);
+                } catch (err) {
+                    localSettings = {};
+                }
+                bdPluginStorage.set("lineNumbers", "settings", localSettings);
             }
             return $.extend({}, defaultSettings, localSettings);
         }
 
         try {
-            localStorage.lineNumbers = JSON.stringify(settings);
+            bdPluginStorage.set("lineNumbers", "settings", settings);
         } catch (err) {
             console.warn("LineNumbers:", "unable to save settings:", err);
         }
