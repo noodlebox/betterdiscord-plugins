@@ -27,6 +27,61 @@ var autoGif = function () {};
 (function () {
     "use strict";
 
+    // This is super hackish, and will likely break as Discord's internal API changes
+    // Anything using this or what it returns should be prepared to catch some exceptions
+    const getInternalInstance = e => e[Object.keys(e).find(k => k.startsWith("__reactInternalInstance"))];
+
+    function getOwnerInstance(e, {include, exclude=["Popout", "Tooltip", "Scroller", "BackgroundFlash"]} = {}) {
+        if (e === undefined) {
+            return undefined;
+        }
+
+        // Set up filter; if no include filter is given, match all except those in exclude
+        const excluding = include === undefined;
+        const filter = excluding ? exclude : include;
+
+        // Get displayName of the React class associated with this element
+        // Based on getName(), but only check for an explicit displayName
+        function getDisplayName(owner) {
+            const type = owner._currentElement.type;
+            const constructor = owner._instance && owner._instance.constructor;
+            return type.displayName || constructor && constructor.displayName || null;
+        }
+        // Check class name against filters
+        function classFilter(owner) {
+            const name = getDisplayName(owner);
+            return (name !== null && !!(filter.includes(name) ^ excluding));
+        }
+
+        // Walk up the hierarchy until a proper React object is found
+        for (let prev, curr=getInternalInstance(e); !_.isNil(curr); prev=curr, curr=curr._hostParent) {
+            // Before checking its parent, try to find a React object for prev among renderedChildren
+            // This finds React objects which don't have a direct counterpart in the DOM hierarchy
+            // e.g. Message, ChannelMember, ...
+            if (prev !== undefined && !_.isNil(curr._renderedChildren)) {
+                /* jshint loopfunc: true */
+                let owner = Object.values(curr._renderedChildren)
+                    .find(v => !_.isNil(v._instance) && v.getHostNode() === prev.getHostNode());
+                if (!_.isNil(owner) && classFilter(owner)) {
+                    return owner._instance;
+                }
+            }
+
+            if (_.isNil(curr._currentElement)) {
+                continue;
+            }
+
+            // Get a React object if one corresponds to this DOM element
+            // e.g. .user-popout -> UserPopout, ...
+            let owner = curr._currentElement._owner;
+            if (!_.isNil(owner) && classFilter(owner)) {
+                return owner._instance;
+            }
+        }
+
+        return null;
+    }
+
     // Helper function for finding all elements matching selector affected by a mutation
     function mutationFind(mutation, selector) {
         var target = $(mutation.target), addedNodes = $(mutation.addedNodes);
@@ -69,6 +124,24 @@ var autoGif = function () {};
         });
     }
 
+    function animateAvatar() {
+        /* jshint validthis: true */
+        try {
+            const messageGroup = getOwnerInstance(this, {include: ["MessageGroup"]});
+            if (messageGroup.state.animatedAvatar) {
+                setTimeout(() => messageGroup.setState({animate: true}));
+            }
+        } catch (err) {
+            // Something (not surprisingly) broke, but this isn't critical enough to completely bail over
+            //console.error("DiscordAutoGif", this, err);
+            return;
+        }
+    }
+
+    function processAvatars(mutation) {
+        mutationFind(mutation, ".message-group").each(animateAvatar);
+    }
+
     autoGif.prototype.load = function () {};
 
     autoGif.prototype.unload = function () {};
@@ -77,12 +150,18 @@ var autoGif = function () {};
         // process entire document
         var mutation = {target: document, addedNodes: [document]};
         processAccessories(mutation);
+        processAvatars(mutation);
+
+        $(".theme-dark, .theme-light").on("mouseleave.autoGif", ".message-group", animateAvatar);
     };
 
-    autoGif.prototype.stop = function () {};
+    autoGif.prototype.stop = function () {
+        $(".theme-dark, .theme-light").off(".autoGif", ".message-group");
+    };
 
     autoGif.prototype.observer = function (mutation) {
         processAccessories(mutation);
+        processAvatars(mutation);
     };
 
     autoGif.prototype.getSettingsPanel = function () {
