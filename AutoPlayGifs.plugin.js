@@ -124,11 +124,15 @@ var autoGif = function () {};
         });
     }
 
+    // Mark elements with modified state so that they may be restored later
+    const animationForced = new WeakSet();
+
     function animateAvatar() {
         /* jshint validthis: true */
         try {
             const messageGroup = getOwnerInstance(this, {include: ["MessageGroup"]});
             if (messageGroup.state.animatedAvatar) {
+                animationForced.add(this);
                 setTimeout(() => messageGroup.setState({animate: true}));
             }
         } catch (err) {
@@ -157,6 +161,21 @@ var autoGif = function () {};
 
     autoGif.prototype.stop = function () {
         $(".theme-dark, .theme-light").off(".autoGif", ".message-group");
+        // Restore original state
+        $(".message-group").each(function () {
+            if (!animationForced.delete(this)) {
+                // This element's state was not modified
+                // Don't trigger a pointless re-render with setState
+                return;
+            }
+            try {
+                getOwnerInstance(this, {include: ["MessageGroup"]}).setState({animate: false});
+            } catch (err) {
+                // Something (not surprisingly) broke, but this isn't critical enough to completely bail over
+                //console.error("DiscordAutoGif", this, err);
+                return;
+            }
+        });
     };
 
     autoGif.prototype.observer = function (mutation) {
