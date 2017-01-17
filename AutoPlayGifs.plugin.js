@@ -1,4 +1,4 @@
-//META{"name":"agif"}*//
+//META{"name":"autoGif"}*//
 
 /*@cc_on
 @if (@_jscript)
@@ -22,69 +22,88 @@
     WScript.Quit();
 @else @*/
 
-var agif = function () {};
+var autoGif = function () {};
 
-// Autoplay GIFs
-agif.prototype.convert = function (target) {
-    // Handle GIF
-    $(target).find(".image:has(canvas)").each(function () {
-        var image = $(this);
-        var canvas = image.children("canvas").first();
-        // Replace GIF preview with actual image
-        var src = canvas.attr("src");
-        if(src !== undefined) {
-            image.replaceWith($("<img>", {
-                src: canvas.attr("src"),
-                width: canvas.attr("width"),
-                height: canvas.attr("height"),
-            }).addClass("image kawaii-autogif"));
-        }
-    });
+(function () {
+    "use strict";
 
-    // Handle GIFV
-    $(target).find(".embed-thumbnail-gifv:has(video)").each(function () {
-        var embed = $(this);
-        var video = embed.children("video").first();
-        // Remove the class, embed-thumbnail-gifv, to avoid the "GIF" overlay
-        embed.removeClass("embed-thumbnail-gifv").addClass("kawaii-autogif");
-        // Prevent the default behavior of pausing the video
-        embed.parent().on("mouseout.autoGif", function (event) {
-            event.stopPropagation();
+    // Helper function for finding all elements matching selector affected by a mutation
+    function mutationFind(mutation, selector) {
+        var target = $(mutation.target), addedNodes = $(mutation.addedNodes);
+        var mutated = target.add(addedNodes).filter(selector);
+        var descendants = addedNodes.find(selector);
+        var ancestors = target.parents(selector);
+        return mutated.add(descendants).add(ancestors);
+    }
+
+    // Automatically play GIFs and "GIFV" Videos
+    function processAccessories(mutation) {
+        var accessories = mutationFind(mutation, ".accessory");
+
+        // Handle GIF
+        accessories.find(".image:has(canvas)").each(function () {
+            var image = $(this);
+            var canvas = image.children("canvas").first();
+            // Replace GIF preview with actual image
+            var src = canvas.attr("src");
+            if(src !== undefined) {
+                image.replaceWith($("<img>", {
+                    src: canvas.attr("src"),
+                    width: canvas.attr("width"),
+                    height: canvas.attr("height"),
+                }).addClass("image kawaii-autogif"));
+            }
         });
-        video[0].play();
-    });
-};
 
-agif.prototype.onMessage = function () {};
+        // Handle GIFV
+        accessories.find(".embed-thumbnail-gifv:has(video)").each(function () {
+            var embed = $(this);
+            var video = embed.children("video").first();
+            // Remove the class, embed-thumbnail-gifv, to avoid the "GIF" overlay
+            embed.removeClass("embed-thumbnail-gifv").addClass("kawaii-autogif");
+            // Prevent the default behavior of pausing the video
+            embed.parent().on("mouseout.autoGif", function (event) {
+                event.stopPropagation();
+            });
+            video[0].play();
+        });
+    }
 
-agif.prototype.onSwitch = function () {};
+    autoGif.prototype.load = function () {};
 
-agif.prototype.start = function () {
-    this.convert(document);
-};
+    autoGif.prototype.unload = function () {};
 
-agif.prototype.observer = function (e) {
-    this.convert(e.target);
-};
+    autoGif.prototype.start = function () {
+        // process entire document
+        var mutation = {target: document, addedNodes: [document]};
+        processAccessories(mutation);
+    };
 
-agif.prototype.load = function () {};
-agif.prototype.unload = function () {};
-agif.prototype.stop = function () {};
-agif.prototype.getSettingsPanel = function () {
-    return "";
-};
+    autoGif.prototype.stop = function () {};
 
-agif.prototype.getName = function () {
-    return "Autogif";
-};
-agif.prototype.getDescription = function () {
-    return "Autoplay gifs without having to hover.";
-};
-agif.prototype.getVersion = function () {
-    return "1.0.0";
-};
-agif.prototype.getAuthor = function () {
-    return "noodlebox";
-};
+    autoGif.prototype.observer = function (mutation) {
+        processAccessories(mutation);
+    };
+
+    autoGif.prototype.getSettingsPanel = function () {
+        return "";
+    };
+
+    autoGif.prototype.getName = function () {
+        return "Autogif";
+    };
+
+    autoGif.prototype.getDescription = function () {
+        return "Autoplay gifs without having to hover.";
+    };
+
+    autoGif.prototype.getVersion = function () {
+        return "1.0.0";
+    };
+
+    autoGif.prototype.getAuthor = function () {
+        return "noodlebox";
+    };
+})();
 
 /*@end @*/
