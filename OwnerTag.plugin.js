@@ -182,10 +182,27 @@ var ownerTag = function () {};
         return undefined;
     }
 
+    function addTag() {
+        /* jshint validthis: true */
+        var color = getUserColor(this);
+        var tag = $("<span>", {
+            class: "kawaii-tag",
+        }).text("OWNER");
+
+        if (color !== null) {
+            tag.css("background-color", color);
+
+            if (isBright(color)) {
+                tag.addClass("kawaii-tag-bright");
+            }
+        }
+        return tag;
+    }
+
     var prevGuildId;
 
     function processServer(mutation) {
-        var guild, guildId, ownerId, usernames, tags;
+        var guild, guildId, ownerId, members, authors, tags;
 
         guild = $(".guild.selected")[0];
 
@@ -205,33 +222,31 @@ var ownerTag = function () {};
         // and the previous server.
         if (guildId !== prevGuildId) {
             // Get all visible members
-            usernames = $(".member-username-inner");
+            members = $(".member-username-inner");
             // Remove tags that were added
-            usernames.siblings(".kawaii-tag").remove();
-            usernames.filter(".kawaii-tagged").removeClass("kawaii-tagged");
-            // Add the set of message authors affected by this mutation
-            usernames = usernames.add(mutationFind(mutation, ".user-name"));
+            members.siblings(".kawaii-tag").remove();
+            members.filter(".kawaii-tagged").removeClass("kawaii-tagged");
         } else {
-            // Get the set of message authors and server members affected by this mutation
-            usernames = mutationFind(mutation, ".member-username-inner, .user-name");
+            members = mutationFind(mutation, ".member-username-inner");
         }
 
-        // Process usernames
-        usernames.filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged").after(function () {
-            var color = getUserColor(this);
-            var tag = $("<span>", {
-                class: "kawaii-tag",
-            }).text("OWNER");
+        // Get the set of message authors affected by this mutation
+        authors = mutationFind(mutation, ".user-name");
 
-            if (color !== null) {
-                tag.css("background-color", color);
+        if (!authors.closest(".message-group").hasClass("compact")) {
+            // If not in compact mode, process the same as guild members
+            members = members.add(authors);
+        } else {
+            // Process authors (tag before of name in compact mode)
+            authors.filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged")
+                .before(addTag)
+                .addClass("kawaii-tagged");
+        }
 
-                if (isBright(color)) {
-                    tag.addClass("kawaii-tag-bright");
-                }
-            }
-            return tag;
-        }).addClass("kawaii-tagged");
+        // Process guild members
+        members.filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged")
+            .after(addTag)
+            .addClass("kawaii-tagged");
 
         tags = mutationFind(mutation, ".discord-tag");
 
