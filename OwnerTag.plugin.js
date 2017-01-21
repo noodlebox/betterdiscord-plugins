@@ -133,6 +133,23 @@ var ownerTag = function () {};
         return props.colorString;
     }
 
+    // Convert colorString to array of RGB values
+    function hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? [
+            parseInt(result[1], 16),
+            parseInt(result[2], 16),
+            parseInt(result[3], 16)
+        ] : null;
+    }
+
+    // Check whether colorString is brighter than middle gray
+    // See: https://stackoverflow.com/a/3943023/6807290
+    function isBright(color){
+        var c = hexToRgb(color);
+        return !!c && (c[0]*0.299 + c[1]*0.587 + c[2]*0.114) > 186;
+    }
+
     // Get the relevant guild ID for an element, or undefined
     function getGuildId(e) {
         var props = getInternalProps(e);
@@ -165,10 +182,27 @@ var ownerTag = function () {};
         return undefined;
     }
 
+    function addTag() {
+        /* jshint validthis: true */
+        var color = getUserColor(this);
+        var tag = $("<span>", {
+            class: "kawaii-tag",
+        }).text("OWNER");
+
+        if (color !== null) {
+            tag.css("background-color", color);
+
+            if (isBright(color)) {
+                tag.addClass("kawaii-tag-bright");
+            }
+        }
+        return tag;
+    }
+
     var prevGuildId;
 
     function processServer(mutation) {
-        var guild, guildId, ownerId, usernames, tags;
+        var guild, guildId, ownerId, members, authors, tags;
 
         guild = $(".guild.selected")[0];
 
@@ -188,33 +222,36 @@ var ownerTag = function () {};
         // and the previous server.
         if (guildId !== prevGuildId) {
             // Get all visible members
-            usernames = $(".member-username-inner");
+            members = $(".member-username-inner");
             // Remove tags that were added
-            usernames.siblings(".kawaii-tag").remove();
-            usernames.filter(".kawaii-tagged").removeClass("kawaii-tagged");
-            // Add the set of message authors affected by this mutation
-            usernames = usernames.add(mutationFind(mutation, ".user-name"));
+            members.siblings(".kawaii-tag").remove();
+            members.filter(".kawaii-tagged").removeClass("kawaii-tagged");
         } else {
-            // Get the set of message authors and server members affected by this mutation
-            usernames = mutationFind(mutation, ".member-username-inner, .user-name");
+            members = mutationFind(mutation, ".member-username-inner");
         }
 
-        // Process usernames
-        usernames.filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged").after(function () {
-            var color = getUserColor(this);
-            var tag = $("<span>", {
-                class: "bot-tag kawaii-tag",
-            }).text("OWNER");
-            if (color !== null) {
-                tag.css("background-color", color);
-            }
-            return tag;
-        }).addClass("kawaii-tagged");
+        // Get the set of message authors affected by this mutation
+        authors = mutationFind(mutation, ".user-name");
+
+        if (!authors.closest(".message-group").hasClass("compact")) {
+            // If not in compact mode, process the same as guild members
+            members = members.add(authors);
+        } else {
+            // Process authors (tag before of name in compact mode)
+            authors.filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged")
+                .before(addTag)
+                .addClass("kawaii-tagged");
+        }
+
+        // Process guild members
+        members.filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged")
+            .after(addTag)
+            .addClass("kawaii-tagged");
 
         tags = mutationFind(mutation, ".discord-tag");
 
         tags.filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged")
-            .append($("<span>", {class: "bot-tag bot-tag-invert kawaii-tag"}).text("OWNER"))
+            .append($("<span>", {class: "kawaii-tag kawaii-tag-invert"}).text("OWNER"))
             .addClass("kawaii-tagged");
 
         prevGuildId = guildId;
@@ -233,7 +270,7 @@ var ownerTag = function () {};
         guilds = profile.find(".guild .avatar-large");
 
         guilds.filter((_, e) => getOwnerId(e) === userId).parent().not(".kawaii-tagged")
-            .append($("<span>", {class: "bot-tag kawaii-tag"}).text("OWNER"))
+            .append($("<span>", {class: "kawaii-tag"}).text("OWNER"))
             .addClass("kawaii-tagged");
     }
 
@@ -246,7 +283,40 @@ var ownerTag = function () {};
         return mutated.add(descendants).add(ancestors);
     }
 
+    // Default colors (https://discordapp.com/branding)
+    // #7289DA - "Blurple"
+    // #23272A - "Not quite black"
+    var css = `
+    .kawaii-tag {
+        background: #7289da;
+        font-size: 10px;
+        font-weight: 600;
+        color: #fff!important;
+        margin-left: 6px;
+        padding: 1px 2px;
+        border-radius: 3px;
+        text-transform: uppercase;
+        vertical-align: bottom;
+        line-height: 16px;
+        -ms-flex-negative: 0;
+        flex-shrink: 0;
+    }
+
+    .compact .kawaii-tag {
+        margin: 0 3px 0 0;
+    }
+
+    .kawaii-tag-bright {
+        color: #23272A!important;
+    }
+
+    .kawaii-tag-invert {
+        background: #fff;
+        color: #7289da!important;
+    }`;
+
     ownerTag.prototype.start = function () {
+        BdApi.injectCSS("kawaii-tag-css", css);
         // process entire document
         var mutation = {target: document, addedNodes: [document]};
         processServer(mutation);
@@ -263,6 +333,7 @@ var ownerTag = function () {};
     ownerTag.prototype.unload = function () {};
 
     ownerTag.prototype.stop = function () {
+        BdApi.clearCSS("kawaii-tag-css");
         // Remove tags that were added
         $(".kawaii-tag").remove();
         $(".kawaii-tagged").removeClass("kawaii-tagged");
