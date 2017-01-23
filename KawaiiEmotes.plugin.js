@@ -1086,7 +1086,7 @@ var kawaiiemotes = function () {};
                 // all twitch emotes (that we care about) are composed of characters in [a-zA-Z0-9_], i.e. \w
                 // colons (:) are allowed when used for emote modifiers
                 // use a regex with a capture group, so that we can preserve separators
-                var words = this.data.split(/([^\w:]+)/g);
+                var words = this.data.split(/(\s+)/g);
                 // non-emoteable words, for building a new text node if necessary
                 var nonEmote = [];
                 // whether the text in this node has been modified
@@ -1094,7 +1094,7 @@ var kawaiiemotes = function () {};
                 for (var i = 0; i < words.length; i += 2) {
                     // words[i] is our potential emote (+modifer)
                     // words[i+1] is a separator, or undefined
-                    var res = /^(\w*)(?::(.*))?$/.exec(words[i]);
+                    var res = /^([^:]*)(?::(.*))?$/.exec(words[i]);
                     // word is our potential emote
                     var word = res[1];
                     // modifier is an emote modifier, or undefined
