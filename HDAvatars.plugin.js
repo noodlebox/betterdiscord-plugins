@@ -90,7 +90,7 @@ var hdAvatars = function () {};
             ["gif", "gif"],
     ]);
 
-    const params = "?size=1024";
+    const params = "?size=1024#";
 
     // References to internal methods
     var user, getAvatarURL;
