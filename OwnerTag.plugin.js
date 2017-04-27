@@ -248,11 +248,23 @@ var ownerTag = function () {};
             .after(addTag)
             .addClass("kawaii-tagged");
 
-        tags = mutationFind(mutation, ".discord-tag");
+        // User profile popout
+        tags = mutationFind(mutation, ".discord-tag")
+            .filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged");
 
-        tags.filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged")
-            .append($("<span>", {class: "kawaii-tag kawaii-tag-invert"}).text("OWNER"))
-            .addClass("kawaii-tagged");
+        // Small popout
+        if (tags.parent(".username-wrapper").length > 0) {
+            tags.append($("<span>", {class: "kawaii-tag kawaii-tag-invert"})
+                .text("OWNER"))
+                .addClass("kawaii-tagged");
+        }
+
+        // Fullscreen popout (modal)
+        if (tags.parent(".header-info-inner").length > 0) {
+            tags.append($("<span>", {class: "kawaii-tag kawaii-tag"})
+                .text("OWNER"))
+                .addClass("kawaii-tagged");
+        }
 
         prevGuildId = guildId;
     }
