@@ -152,15 +152,20 @@ var ownerTag = function () {};
 
     // Get the relevant guild ID for an element, or undefined
     function getGuildId(e) {
-        var props = getInternalProps(e);
-        if (props === undefined) {
+        var owner = getOwnerInstance(e);
+        if (owner === undefined) {
+            return undefined;
+        }
+
+        var state = owner.state;
+        if (state === undefined) {
             return undefined;
         }
 
         try {
-            return props.guild.id;
+            return state.guild.id;
         } catch (err) {
-            // Catch TypeError if no guild in props
+            // Catch TypeError if no guild in state
         }
 
         return undefined;
@@ -168,15 +173,20 @@ var ownerTag = function () {};
 
     // Get the relevant guild owner ID for an element, or undefined
     function getOwnerId(e) {
-        var props = getInternalProps(e);
-        if (props === undefined) {
+        var owner = getOwnerInstance(e);
+        if (owner === undefined) {
+            return undefined;
+        }
+
+        var state = owner.state;
+        if (state === undefined) {
             return undefined;
         }
 
         try {
-            return props.guild.ownerId;
+            return state.guild.ownerId;
         } catch (err) {
-            // Catch TypeError if no guild in props
+            // Catch TypeError if no guild in state
         }
 
         return undefined;
@@ -202,15 +212,15 @@ var ownerTag = function () {};
     var prevGuildId;
 
     function processServer(mutation) {
-        var guild, guildId, ownerId, members, authors, tags;
+        var chat, guildId, ownerId, members, authors, tags;
 
-        guild = $(".guild.selected")[0];
+        chat = $(".chat")[0];
 
         // Get the ID of the server
-        guildId = getGuildId(guild);
+        guildId = getGuildId(chat);
 
         // Get the ID of the server's owner
-        ownerId = getOwnerId(guild);
+        ownerId = getOwnerId(chat);
         if (ownerId === undefined) {
             // (Probably) not looking at a server
             return;
