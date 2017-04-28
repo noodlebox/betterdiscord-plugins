@@ -157,13 +157,14 @@ var ownerTag = function () {};
             return undefined;
         }
 
-        var state = owner.state;
-        if (state === undefined) {
-            return undefined;
+        try {
+            return owner.props.guild.id;
+        } catch (err) {
+            // Catch TypeError if no guild in props
         }
 
         try {
-            return state.guild.id;
+            return owner.state.guild.id;
         } catch (err) {
             // Catch TypeError if no guild in state
         }
@@ -178,13 +179,14 @@ var ownerTag = function () {};
             return undefined;
         }
 
-        var state = owner.state;
-        if (state === undefined) {
-            return undefined;
+        try {
+            return owner.props.guild.ownerId;
+        } catch (err) {
+            // Catch TypeError if no guild in props
         }
 
         try {
-            return state.guild.ownerId;
+            return owner.state.guild.ownerId;
         } catch (err) {
             // Catch TypeError if no guild in state
         }
