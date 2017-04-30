@@ -1479,7 +1479,7 @@ var kawaiiemotes = function () {};
             }));
 
 
-        return panel;
+        return panel[0];
     };
 
     kawaiiemotes.prototype.getName = function () {
