@@ -313,7 +313,7 @@ var lineNumbers = function () {};
             }));
 
 
-        return panel;
+        return panel[0];
     };
 
     lineNumbers.prototype.getName = function () {
