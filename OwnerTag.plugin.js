@@ -324,6 +324,7 @@ var ownerTag = function () {};
         line-height: 16px;
         -ms-flex-negative: 0;
         flex-shrink: 0;
+        align-self: center;
     }
 
     .compact .kawaii-tag {
