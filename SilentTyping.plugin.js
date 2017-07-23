@@ -99,7 +99,7 @@ var silentTyping = function () {};
      * @param {boolean} [options.displayName] You can provide meaningful name of class/object provided in `what` param for logging purposes. By default there will be a try to determine name automatically.
      * @return {cancelPatch} Function with no arguments and no return value that should be called to cancel (unpatch) this patch. You should save and run it when your plugin is stopped.
      */
-    const monkeyPatch = (what, methodName, options) => {
+    const monkeyPatch = window.DiscordInternals && window.DiscordInternals.monkeyPatch || ((what, methodName, options) => {
         const {before, after, instead, once = false, silent = false} = options;
         const displayName = options.displayName || what.displayName || what.name || what.constructor.displayName || what.constructor.name;
         if (!silent) console.log('patch', methodName, 'of', displayName);
@@ -142,12 +142,12 @@ var silentTyping = function () {};
         what[methodName].__monkeyPatched = true;
         what[methodName].displayName = 'patched ' + (what[methodName].displayName || methodName);
         return cancel;
-    };
+    });
 
     /**
      * @author samogot
      */
-    const WebpackModules = (() => {
+    const WebpackModules = window.DiscordInternals && window.DiscordInternals.WebpackModules || (() => {
 
         const req = webpackJsonp([], {
             '__extra_id__': (module, exports, req) => exports.default = req
