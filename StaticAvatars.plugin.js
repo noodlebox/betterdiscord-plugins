@@ -52,7 +52,7 @@ var staticAvatars = function () {};
     };
 
     staticAvatars.prototype.getDescription = function () {
-        return "Don't animate avatars in the chat area";
+        return "Never animate avatars";
     };
 
     staticAvatars.prototype.getVersion = function () {
