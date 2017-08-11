@@ -261,22 +261,16 @@ var ownerTag = function () {};
             .addClass("kawaii-tagged");
 
         // User profile popout
-        tags = mutationFind(mutation, ".discord-tag")
-            .filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged");
-
-        // Small popout
-        if (tags.parent(".username-wrapper").length > 0) {
-            tags.append($("<span>", {class: "kawaii-tag kawaii-tag-invert"})
-                .text("OWNER"))
-                .addClass("kawaii-tagged");
-        }
+        mutationFind(mutation, ".userPopout-4pfA0d .headerTag-3zin_i")
+            .filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged")
+            .append($("<span>", {class: "kawaii-tag kawaii-tag-invert header-kawaii-tag"}).text("OWNER"))
+            .addClass("kawaii-tagged");
 
         // Fullscreen popout (modal)
-        if (tags.parent(".header-info-inner").length > 0) {
-            tags.append($("<span>", {class: "kawaii-tag kawaii-tag"})
-                .text("OWNER"))
-                .addClass("kawaii-tagged");
-        }
+        mutationFind(mutation, ".header-info-inner .discord-tag")
+            .filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged")
+            .append($("<span>", {class: "kawaii-tag"}).text("OWNER"))
+            .addClass("kawaii-tagged");
 
         prevGuildId = guildId;
     }
@@ -314,7 +308,7 @@ var ownerTag = function () {};
     .kawaii-tag {
         background: #7289da;
         font-size: 10px;
-        font-weight: 600;
+        font-weight: 500;
         color: #fff!important;
         margin-left: 6px;
         padding: 1px 2px;
@@ -328,6 +322,10 @@ var ownerTag = function () {};
 
     .compact .kawaii-tag {
         margin: 0 3px 0 0;
+    }
+
+    .header-kawaii-tag {
+        line-height: 22px;
     }
 
     .kawaii-tag-bright {
