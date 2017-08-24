@@ -1198,7 +1198,7 @@ var kawaiiemotes = function () {};
                 $(this).addClass("kawaii-fancytooltip").removeAttr("title");
                 $(this).on("mouseover.fancyTooltip", function () {
                     // Create and insert tooltip
-                    var tooltip = $("<div>").append(title).addClass("tooltip tooltip-top tooltip-normal");
+                    var tooltip = $("<div>").append(title).addClass("tooltip tooltip-top tooltip-brand");
                     $(".tooltips").append(tooltip);
 
                     // Position the tooltip
