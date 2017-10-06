@@ -327,13 +327,10 @@ var kawaiiemotes = function () {};
                 return;
             }
 
-            const left = textarea.value.slice(0, matchStart) + completions[selectedIndex][0] + " ";
-            const right = textarea.value.slice(textarea.selectionEnd);
-
-            textarea.value = left + right;
-            textarea.selectionStart = textarea.selectionEnd = left.length;
-            // Ensure React accounts for the newly inserted text
-            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            textarea.focus();
+            // Set beginning of selection at start of partial emote text; end of selection end remains where it is
+            textarea.selectionStart = matchStart;
+            document.execCommand("insertText", false, completions[selectedIndex][0] + " ");
 
             destroyCompletions();
         }
