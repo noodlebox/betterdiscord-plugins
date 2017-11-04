@@ -43,44 +43,29 @@ var ownerTag = function () {};
         // Get displayName of the React class associated with this element
         // Based on getName(), but only check for an explicit displayName
         function getDisplayName(owner) {
-            const type = owner._currentElement.type;
-            const constructor = owner._instance && owner._instance.constructor;
-            return type.displayName || constructor && constructor.displayName || null;
+            const type = owner.type;
+            const constructor = owner.stateNode && owner.stateNode.constructor;
+            return type && type.displayName || constructor && constructor.displayName || null;
         }
+
         // Check class name against filters
         function classFilter(owner) {
             const name = getDisplayName(owner);
             return (name !== null && !!(filter.includes(name) ^ excluding));
         }
 
-        // Walk up the hierarchy until a proper React object is found
-        for (let prev, curr=getInternalInstance(e); !_.isNil(curr); prev=curr, curr=curr._hostParent) {
-            // Before checking its parent, try to find a React object for prev among renderedChildren
-            // This finds React objects which don't have a direct counterpart in the DOM hierarchy
-            // e.g. Message, ChannelMember, ...
-            if (prev !== undefined && !_.isNil(curr._renderedChildren)) {
-                /* jshint loopfunc: true */
-                let owner = Object.values(curr._renderedChildren)
-                    .find(v => !_.isNil(v._instance) && v.getHostNode() === prev.getHostNode());
-                if (!_.isNil(owner) && classFilter(owner)) {
-                    return owner._instance;
-                }
+        let curr = getInternalInstance(e);
+        while (curr) {
+            if (classFilter(curr)) {
+                return curr.stateNode;
             }
-
-            if (_.isNil(curr._currentElement)) {
-                continue;
-            }
-
-            // Get a React object if one corresponds to this DOM element
-            // e.g. .user-popout -> UserPopout, ...
-            let owner = curr._currentElement._owner;
-            if (!_.isNil(owner) && classFilter(owner)) {
-                return owner._instance;
-            }
+            curr = curr.return;
         }
 
         return null;
     }
+
+    getOwnerInstance.displayName = 'getOwnerInstance';
 
     function getInternalProps(e) {
         if (e === undefined) {
