@@ -32,55 +32,35 @@ var ownerTag = function () {};
     const getInternalInstance = e => e[Object.keys(e).find(k => k.startsWith("__reactInternalInstance"))];
 
     function getOwnerInstance(e, {include, exclude=["Popout", "Tooltip", "Scroller", "BackgroundFlash"]} = {}) {
-        if (e === undefined) {
-            return undefined;
-        }
+      if (e === undefined) {
+          return undefined;
+      }
+      const excluding = include === undefined;
+      const filter = excluding ? exclude : include;
 
-        // Set up filter; if no include filter is given, match all except those in exclude
-        const excluding = include === undefined;
-        const filter = excluding ? exclude : include;
+      function getDisplayName(owner) {
+          const type = owner.type;
+          const constructor = owner.stateNode && owner.stateNode.constructor;
+          return type && type.displayName || constructor && constructor.displayName || null;
+      }
 
-        // Get displayName of the React class associated with this element
-        // Based on getName(), but only check for an explicit displayName
-        function getDisplayName(owner) {
-            const type = owner._currentElement.type;
-            const constructor = owner._instance && owner._instance.constructor;
-            return type.displayName || constructor && constructor.displayName || null;
-        }
-        // Check class name against filters
-        function classFilter(owner) {
-            const name = getDisplayName(owner);
-            return (name !== null && !!(filter.includes(name) ^ excluding));
-        }
+      function classFilter(owner) {
+          const name = getDisplayName(owner);
+          return (name !== null && !!(filter.includes(name) ^ excluding));
+      }
 
-        // Walk up the hierarchy until a proper React object is found
-        for (let prev, curr=getInternalInstance(e); !_.isNil(curr); prev=curr, curr=curr._hostParent) {
-            // Before checking its parent, try to find a React object for prev among renderedChildren
-            // This finds React objects which don't have a direct counterpart in the DOM hierarchy
-            // e.g. Message, ChannelMember, ...
-            if (prev !== undefined && !_.isNil(curr._renderedChildren)) {
-                /* jshint loopfunc: true */
-                let owner = Object.values(curr._renderedChildren)
-                    .find(v => !_.isNil(v._instance) && v.getHostNode() === prev.getHostNode());
-                if (!_.isNil(owner) && classFilter(owner)) {
-                    return owner._instance;
-                }
-            }
+      let curr = getInternalInstance(e);
+      while (curr) {
+          if (classFilter(curr)) {
+              return curr.stateNode;
+          }
+          curr = curr.return;
+      }
 
-            if (_.isNil(curr._currentElement)) {
-                continue;
-            }
+      return null;
+  };
 
-            // Get a React object if one corresponds to this DOM element
-            // e.g. .user-popout -> UserPopout, ...
-            let owner = curr._currentElement._owner;
-            if (!_.isNil(owner) && classFilter(owner)) {
-                return owner._instance;
-            }
-        }
-
-        return null;
-    }
+  getOwnerInstance.displayName = 'getOwnerInstance';
 
     function getInternalProps(e) {
         if (e === undefined) {
@@ -305,36 +285,36 @@ var ownerTag = function () {};
     // #7289DA - "Blurple"
     // #23272A - "Not quite black"
     var css = `
-    .kawaii-tag {
-        background: #7289da;
-        font-size: 10px;
-        font-weight: 500;
-        color: #fff!important;
-        margin-left: 6px;
-        padding: 1px 2px;
-        border-radius: 3px;
-        text-transform: uppercase;
-        vertical-align: bottom;
-        line-height: 16px;
-        -ms-flex-negative: 0;
-        flex-shrink: 0;
-    }
+      .kawaii-tag {
+          background: #7289da;
+          font-size: 10px;
+          font-weight: 500;
+          color: #fff!important;
+          margin-left: 6px;
+          padding: 1px 2px;
+          border-radius: 3px;
+          text-transform: uppercase;
+          vertical-align: bottom;
+          line-height: 16px;
+          -ms-flex-negative: 0;
+          flex-shrink: 0;
+      }
 
-    .compact .kawaii-tag {
-        margin: 0 3px 0 0;
-    }
+      .compact .kawaii-tag {
+          margin: 0 3px 0 0;
+      }
 
-    .header-kawaii-tag {
-        line-height: 22px;
-    }
+      .header-kawaii-tag {
+          line-height: 22px;
+      }
 
-    .kawaii-tag-bright {
-        color: #23272A!important;
-    }
+      .kawaii-tag-bright {
+          color: #23272A!important;
+      }
 
-    .kawaii-tag-invert {
-        background: #fff;
-        color: #7289da!important;
+      .kawaii-tag-invert {
+          background: #fff;
+          color: #7289da!important;
     }`;
 
     ownerTag.prototype.start = function () {
