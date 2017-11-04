@@ -32,35 +32,40 @@ var ownerTag = function () {};
     const getInternalInstance = e => e[Object.keys(e).find(k => k.startsWith("__reactInternalInstance"))];
 
     function getOwnerInstance(e, {include, exclude=["Popout", "Tooltip", "Scroller", "BackgroundFlash"]} = {}) {
-      if (e === undefined) {
-          return undefined;
-      }
-      const excluding = include === undefined;
-      const filter = excluding ? exclude : include;
+        if (e === undefined) {
+            return undefined;
+        }
 
-      function getDisplayName(owner) {
-          const type = owner.type;
-          const constructor = owner.stateNode && owner.stateNode.constructor;
-          return type && type.displayName || constructor && constructor.displayName || null;
-      }
+        // Set up filter; if no include filter is given, match all except those in exclude
+        const excluding = include === undefined;
+        const filter = excluding ? exclude : include;
 
-      function classFilter(owner) {
-          const name = getDisplayName(owner);
-          return (name !== null && !!(filter.includes(name) ^ excluding));
-      }
+        // Get displayName of the React class associated with this element
+        // Based on getName(), but only check for an explicit displayName
+        function getDisplayName(owner) {
+            const type = owner.type;
+            const constructor = owner.stateNode && owner.stateNode.constructor;
+            return type && type.displayName || constructor && constructor.displayName || null;
+        }
 
-      let curr = getInternalInstance(e);
-      while (curr) {
-          if (classFilter(curr)) {
-              return curr.stateNode;
-          }
-          curr = curr.return;
-      }
+        // Check class name against filters
+        function classFilter(owner) {
+            const name = getDisplayName(owner);
+            return (name !== null && !!(filter.includes(name) ^ excluding));
+        }
 
-      return null;
-  };
+        let curr = getInternalInstance(e);
+        while (curr) {
+            if (classFilter(curr)) {
+                return curr.stateNode;
+            }
+            curr = curr.return;
+        }
 
-  getOwnerInstance.displayName = 'getOwnerInstance';
+        return null;
+    }
+
+    getOwnerInstance.displayName = 'getOwnerInstance';
 
     function getInternalProps(e) {
         if (e === undefined) {
@@ -285,36 +290,36 @@ var ownerTag = function () {};
     // #7289DA - "Blurple"
     // #23272A - "Not quite black"
     var css = `
-      .kawaii-tag {
-          background: #7289da;
-          font-size: 10px;
-          font-weight: 500;
-          color: #fff!important;
-          margin-left: 6px;
-          padding: 1px 2px;
-          border-radius: 3px;
-          text-transform: uppercase;
-          vertical-align: bottom;
-          line-height: 16px;
-          -ms-flex-negative: 0;
-          flex-shrink: 0;
-      }
+    .kawaii-tag {
+        background: #7289da;
+        font-size: 10px;
+        font-weight: 500;
+        color: #fff!important;
+        margin-left: 6px;
+        padding: 1px 2px;
+        border-radius: 3px;
+        text-transform: uppercase;
+        vertical-align: bottom;
+        line-height: 16px;
+        -ms-flex-negative: 0;
+        flex-shrink: 0;
+    }
 
-      .compact .kawaii-tag {
-          margin: 0 3px 0 0;
-      }
+    .compact .kawaii-tag {
+        margin: 0 3px 0 0;
+    }
 
-      .header-kawaii-tag {
-          line-height: 22px;
-      }
+    .header-kawaii-tag {
+        line-height: 22px;
+    }
 
-      .kawaii-tag-bright {
-          color: #23272A!important;
-      }
+    .kawaii-tag-bright {
+        color: #23272A!important;
+    }
 
-      .kawaii-tag-invert {
-          background: #fff;
-          color: #7289da!important;
+    .kawaii-tag-invert {
+        background: #fff;
+        color: #7289da!important;
     }`;
 
     ownerTag.prototype.start = function () {
