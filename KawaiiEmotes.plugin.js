@@ -1389,16 +1389,11 @@ var kawaiiemotes = function () {};
 
         // Save these to be restored later
         EmoteModule.prototype.oldObsCallback = EmoteModule.prototype.obsCallback;
-        SettingsPanel.prototype.oldInit = SettingsPanel.prototype.init;
-        SettingsPanel.prototype.oldUpdateSettings = SettingsPanel.prototype.updateSettings;
+        settingsPanel.oldUpdateSettings = settingsPanel.updateSettings;
         // Disable this, because this plugin's mutation observer handles it
         EmoteModule.prototype.obsCallback = $.noop;
         // Hook into these to notify when settings are updated
-        SettingsPanel.prototype.init = function () {
-            this.oldInit();
-            updateSettings();
-        };
-        SettingsPanel.prototype.updateSettings = function () {
+        settingsPanel.updateSettings = function () {
             this.oldUpdateSettings();
             updateSettings();
         };
@@ -1419,8 +1414,7 @@ var kawaiiemotes = function () {};
     kawaiiemotes.prototype.stop = function () {
         // Restore these
         EmoteModule.prototype.obsCallback = EmoteModule.prototype.oldObsCallback;
-        SettingsPanel.prototype.init = SettingsPanel.prototype.oldInit;
-        SettingsPanel.prototype.updateSettings = SettingsPanel.prototype.oldUpdateSettings;
+        settingsPanel.updateSettings = settingsPanel.oldUpdateSettings;
 
         revertEmotes();
 
