@@ -219,12 +219,12 @@ var ownerTag = function () {};
         // and the previous server.
         if (guildId !== prevGuildId) {
             // Get all visible members
-            members = $(".member-username-inner");
+            members = $(".username-MwOsla");
             // Remove tags that were added
             members.siblings(".kawaii-tag").remove();
             members.filter(".kawaii-tagged").removeClass("kawaii-tagged");
         } else {
-            members = mutationFind(mutation, ".member-username-inner");
+            members = mutationFind(mutation, ".username-MwOsla");
         }
 
         // Get the set of message authors affected by this mutation
@@ -246,13 +246,13 @@ var ownerTag = function () {};
             .addClass("kawaii-tagged");
 
         // User profile popout
-        mutationFind(mutation, ".userPopout-4pfA0d .headerTag-3zin_i")
+        mutationFind(mutation, ".userPopout-11hFKo .headerTag-I11IJx")
             .filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged")
             .append($("<span>", {class: "kawaii-tag kawaii-tag-invert header-kawaii-tag"}).text("OWNER"))
             .addClass("kawaii-tagged");
 
         // Fullscreen popout (modal)
-        mutationFind(mutation, ".header-info-inner .discord-tag")
+        mutationFind(mutation, ".headerInfo-Gkqcz9 .nameTag-26T3kW")
             .filter((_, e) => getUserId(e) === ownerId).not(".kawaii-tagged")
             .append($("<span>", {class: "kawaii-tag"}).text("OWNER"))
             .addClass("kawaii-tagged");
