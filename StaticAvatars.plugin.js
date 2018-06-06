@@ -56,7 +56,7 @@ var staticAvatars = function () {};
     };
 
     staticAvatars.prototype.getVersion = function () {
-        return "2.0.0";
+        return "2.0.1";
     };
 
     staticAvatars.prototype.getAuthor = function () {
