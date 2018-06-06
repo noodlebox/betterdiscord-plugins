@@ -66,7 +66,7 @@ var staticAvatars = function () {};
     // If samogot's DiscordInternals lib exists, use it. Otherwise, fall back on bundled code below.
     // See: https://github.com/samogot/betterdiscord-plugins/tree/master/v2/1Lib%20Discord%20Internals
     const DI = window.DiscordInternals;
-    const hasLib = !!(DI && DI.versionCompare && DI.versionCompare(DI.version || "", "1.4") >= 0);
+    const hasLib = !!(DI && DI.versionCompare && DI.versionCompare(DI.version || "", "1.9") >= 0);
 
     /**
      * Function with no arguments and no return value that may be called to revert changes made by {@link monkeyPatch} method, restoring (unpatching) original method.
