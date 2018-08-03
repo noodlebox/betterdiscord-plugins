@@ -1468,7 +1468,7 @@ var kawaiiemotes = function () {};
                         callback: state => { settings.allowWide = state; },
                     },
                     {
-                        label: "Use High-DPI Emotes when available. (soon™)",
+                        label: "Use High-DPI Emotes when available. (soonâ„¢)",
                         checked: settings.highDpi,
                         callback: state => { settings.highDpi = state; },
                         disabled: true,
