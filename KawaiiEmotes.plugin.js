@@ -1299,13 +1299,13 @@ var kawaiiemotes = function () {};
 
     function reload() {
         revertEmotes();
-        var messages = $(".markup, .message-content").not(":has(.message-content)");
+        var messages = $(".markup-2BOw-j, .message-content").not(":has(.message-content)");
         parseEmoteSets(messages, activeEmoteSets);
     }
 
     kawaiiemotes.prototype.observer = function (mutation) {
         // Get the set of messages affected by this mutation
-        var messages = mutationFind(mutation, ".markup, .message-content").not(":has(.message-content)");
+        var messages = mutationFind(mutation, ".markup-2BOw-j, .message-content").not(":has(.message-content)");
         parseEmoteSets(messages, activeEmoteSets);
 
         // Clean up any remaining tooltips
@@ -1315,7 +1315,7 @@ var kawaiiemotes = function () {};
     // Parse the whole document for a single emote set, if it is active
     function parseEmoteSetIfActive(set) {
         if (activeEmoteSets.indexOf(set) !== -1) {
-            var messages = $(".markup, .message-content").not(":has(.message-content)");
+            var messages = $(".markup-2BOw-j, .message-content").not(":has(.message-content)");
             parseEmoteSets(messages, [set]);
         }
     }
