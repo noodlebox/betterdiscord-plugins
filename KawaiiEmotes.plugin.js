@@ -216,7 +216,7 @@ var kawaiiemotes = function () {};
 
         // Show possible completions
         let renderCompletions = _.debounce(function () {
-            const channelTextarea = $(textarea).closest(".channelTextArea-1HTP3C > .inner-3if5cm");
+            const channelTextarea = $(textarea).closest(".channelTextArea-1LDbYG > .inner-zqa7da");
             const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
 
             const candidateText = textarea.value.slice(0, textarea.selectionEnd);
@@ -230,31 +230,31 @@ var kawaiiemotes = function () {};
             const matchList = completions.slice(firstIndex, firstIndex+windowSize);
 
             const autocomplete = $("<div>")
-                .addClass("autocomplete-1TnWNR autocomplete-1LLKUa kawaii-autocomplete")
+                .addClass("autocomplete-i9yVHs autocomplete-1vrmpx kawaii-autocomplete")
                 .on("wheel.kawaii-complete", e => scrollCompletions(e, {locked: true}));
             // FIXME: clean up this mess of jQuery
-            $("<div>", {"class": "autocompleteRowVertical-3_UxVA autocompleteRow-31UJBI"})
-                .append($("<div>", {"class": "selector-nbyEfM"})
+            $("<div>", {"class": "autocompleteRowVertical-q1K4ky autocompleteRow-2OthDa"})
+                .append($("<div>", {"class": "selector-2IcQBU"})
                     .append($("<div>", {text: "Emotes matching "}).append($("<strong>", {text: matchText}))
-                        .addClass("contentTitle-sL6DrN primary400-1OkqpL weightBold-2qbcng")))
+                        .addClass("contentTitle-2tG_sM primary400-hm0Rav weightBold-2yjlgw")))
                 .appendTo(autocomplete);
             autocomplete
                 .append(matchList.map((e,i) => {
-                    let row = $("<div>", {"class": "autocompleteRowVertical-3_UxVA autocompleteRow-31UJBI"});
-                    let selector = $("<div>", {"class": "selector-nbyEfM selectable-3iSmAf"})
+                    let row = $("<div>", {"class": "autocompleteRowVertical-q1K4ky autocompleteRow-2OthDa"});
+                    let selector = $("<div>", {"class": "selector-2IcQBU selectable-x8iAUj"})
                         .append($("<div>")
-                            .addClass("flex-lFgbSz flex-3B1Tl4 horizontal-2BEEBe horizontal-2VE-Fw flex-3B1Tl4 directionRow-yNbSvJ justifyStart-2yIZo0 alignCenter-3VxkQP noWrap-v6g9vO content-249Pr9")
+                            .addClass("flex-lFgbSz flex-1O1GKY horizontal-3Sq5iO horizontal-2VE-Fw flex-1O1GKY directionRow-3v3tfG justifyStart-2NDFzi alignCenter-1dQNNs noWrap-vaXJ4Y content-3JfFJh")
                             .css("flex", "1 1 auto")
-                            .append(e[1]().toggleClass("emoji icon-3XfMwL"))
-                            .append($("<div>", {"class": "marginLeft8-34JoM2", text: e[0]})))
+                            .append(e[1]().toggleClass("emoji icon-17zDF5"))
+                            .append($("<div>", {"class": "marginLeft8-1YseBe", text: e[0]})))
                         .appendTo(row);
                     if (i+firstIndex === selectedIndex) {
-                        selector.addClass("selectorSelected-2M0IGv");
+                        selector.addClass("selectorSelected-1_M1WV");
                     }
                     row.on("mouseenter.kawaii-complete", e => {
                         cached.selectedIndex = i+firstIndex;
-                        row.siblings().children(".selectorSelected-2M0IGv").removeClass("selectorSelected-2M0IGv");
-                        row.children().addClass("selectorSelected-2M0IGv");
+                        row.siblings().children(".selectorSelected-1_M1WV").removeClass("selectorSelected-1_M1WV");
+                        row.children().addClass("selectorSelected-1_M1WV");
                     }).on("mousedown.kawaii-complete", e => {
                         cached.selectedIndex = i+firstIndex;
                         insertSelectedCompletion();
@@ -312,7 +312,7 @@ var kawaiiemotes = function () {};
         }
 
         function destroyCompletions() {
-            const channelTextarea = $(textarea).closest(".channelTextArea-1HTP3C > .inner-3if5cm");
+            const channelTextarea = $(textarea).closest(".channelTextArea-1LDbYG > .inner-zqa7da");
             const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
             oldAutocomplete.remove();
             cached = {};
@@ -439,12 +439,12 @@ var kawaiiemotes = function () {};
             "keydown.kawaii-complete": browseCompletions,
             "wheel.kawaii-complete": scrollCompletions,
             "blur.kawaii-complete": destroyCompletions,
-        }, ".channelTextArea-1HTP3C textarea");
+        }, ".channelTextArea-1LDbYG textarea");
     }
 
     // Tear down event handlers and clean up
     function stopTabComplete() {
-        $(".app").off(".kawaii-complete", ".channelTextArea-1HTP3C textarea");
+        $(".app").off(".kawaii-complete", ".channelTextArea-1LDbYG textarea");
     }
 
     // Filter function for "Twitch-style" emotes, to avoid collisions with common words
@@ -1489,7 +1489,7 @@ var kawaiiemotes = function () {};
     };
 
     kawaiiemotes.prototype.getVersion = function () {
-        return "0.4.7";
+        return "0.4.8";
     };
 
     kawaiiemotes.prototype.getAuthor = function () {
