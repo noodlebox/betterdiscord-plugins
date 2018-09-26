@@ -201,7 +201,7 @@ var ownerTag = function () {};
     function processServer(mutation) {
         var chat, guildId, ownerId, members, authors, tags;
 
-        chat = $(".chat")[0];
+        chat = $(".chat-3bRxxu")[0];
 
         // Get the ID of the server
         guildId = getGuildId(chat);
@@ -228,9 +228,9 @@ var ownerTag = function () {};
         }
 
         // Get the set of message authors affected by this mutation
-        authors = mutationFind(mutation, ".user-name");
+        authors = mutationFind(mutation, ".username-_4ZSMR");
 
-        if (!authors.closest(".message-group").hasClass("compact")) {
+        if (!authors.closest(".container-1YxwTf").hasClass("containerCompact-3V0ioj")) {
             // If not in compact mode, process the same as guild members
             members = members.add(authors);
         } else {
@@ -263,7 +263,7 @@ var ownerTag = function () {};
     function processProfile(mutation) {
         var profile, userId, guilds;
 
-        profile = mutationFind(mutation, "#user-profile-modal");
+        profile = mutationFind(mutation, ".modal-1UGdnR");
         userId = getUserId(profile[0]);
         if (userId === undefined) {
             // (Probably) not looking at a profile
@@ -292,9 +292,9 @@ var ownerTag = function () {};
     var css = `
     .kawaii-tag {
         background: #7289da;
-        font-size: 10px;
+        font-size: .625em;
         font-weight: 500;
-        color: #fff!important;
+        color: #fff !important;
         margin-left: 6px;
         padding: 1px 2px;
         border-radius: 3px;
@@ -305,21 +305,28 @@ var ownerTag = function () {};
         flex-shrink: 0;
     }
 
-    .compact .kawaii-tag {
+    .containerCompact-3V0ioj .kawaii-tag {
         margin: 0 3px 0 0;
     }
 
     .header-kawaii-tag {
-        line-height: 22px;
+        /*line-height: 22px;*/ /*Does not seem to need a higher line height.*/
+        display: inline-block; /*A fix for users with longer names, like I do.*/
     }
 
     .kawaii-tag-bright {
-        color: #23272A!important;
+        color: #23272A !important;
     }
 
     .kawaii-tag-invert {
         background: #fff;
-        color: #7289da!important;
+        color: #7289da !important;
+    }
+    
+    /*Could be replaced with an added tag of kawaii-tag-profile-invert*/
+    .modal-1UGdnR .topSectionPlaying-1J5E4n .kawaii-tag {
+        background: #fff;
+        color: #7289da !important;
     }`;
 
     ownerTag.prototype.start = function () {
