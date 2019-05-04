@@ -164,7 +164,7 @@ var lineNumbers = function () {};
 
     function processCodeBlocks(mutation) {
         mutationFind(mutation, ".hljs").not(":has(ol)")
-            .filter((_, e) => !(settings.ignoreNoLanguage && e.className == "scrollbarGhost-2F9Zj2 scrollbar-3dvm_9 da-scrollbarGhost da-scrollbar hljs"))
+            .filter((_, e) => !(settings.ignoreNoLanguage && e.className.endsWith("hljs")))
             .each(function () {
                 this.innerHTML = this.innerHTML.split("\n").map(line => "<li>"+line+"</li>").join("");
             })
