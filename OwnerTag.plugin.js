@@ -359,7 +359,7 @@ var ownerTag = function () {};
     };
 
     ownerTag.prototype.getVersion = function () {
-        return "1.3.6";
+        return "1.3.7";
     };
 
     ownerTag.prototype.getAuthor = function () {
