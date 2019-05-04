@@ -166,7 +166,7 @@ var lineNumbers = function () {};
         mutationFind(mutation, ".hljs").not(":has(ol)")
             .filter((_, e) => !(settings.ignoreNoLanguage && e.className.endsWith("hljs")))
             .each(function () {
-                this.innerHTML = this.innerHTML.split("\n").map(line => "<li>"+line+"</li>").join("");
+                this.innerHTML = this.innerHTML.split("\n").map(line => "<li>"+line+"<br></li>").join("");
             })
             .wrapInner($("<ol>").addClass("kawaii-linenumbers"));
     }
