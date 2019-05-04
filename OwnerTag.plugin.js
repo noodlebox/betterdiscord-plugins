@@ -201,7 +201,7 @@ var ownerTag = function () {};
     function processServer(mutation) {
         var chat, guildId, ownerId, members, authors, tags;
 
-        chat = $(".chat")[0];
+        chat = $(".chat-3bRxxu")[0];
 
         // Get the ID of the server
         guildId = getGuildId(chat);
