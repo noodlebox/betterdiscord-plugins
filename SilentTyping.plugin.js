@@ -56,7 +56,7 @@ var silentTyping = function () {};
     };
 
     silentTyping.prototype.getVersion = function () {
-        return "2.1.2";
+        return "2.1.3";
     };
 
     silentTyping.prototype.getAuthor = function () {
