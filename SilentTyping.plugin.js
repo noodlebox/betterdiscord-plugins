@@ -28,12 +28,12 @@ var silentTyping = function () {};
     "use strict";
 
     silentTyping.prototype.start = function () {
-        const module = WebpackModules.findByUniqueProperties(["sendTyping"], {cacheOnly: true});
+        const module = WebpackModules.findByUniqueProperties(["startTyping"], {cacheOnly: true});
         if (!module) {
             console.error("SilentTyping:", "unable to monkey patch sendTyping method");
             return;
         }
-        this._cancel = monkeyPatch(module, "sendTyping", {instead: ()=>{}});
+        this._cancel = monkeyPatch(module, "startTyping", {instead: ()=>{}});
     };
 
     silentTyping.prototype.stop = function () {
