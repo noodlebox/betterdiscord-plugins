@@ -240,7 +240,7 @@ var lineNumbers = function () {};
             var localSettings;
 
             try {
-                localSettings = bdPluginStorage.get("lineNumbers", "settings");
+                localSettings = BdApi.getData("lineNumbers", "settings");
             } catch (err) {
                 console.warn("LineNumbers:", "unable to load settings:", err);
                 localSettings = null;
@@ -253,13 +253,13 @@ var lineNumbers = function () {};
                 } catch (err) {
                     localSettings = {};
                 }
-                bdPluginStorage.set("lineNumbers", "settings", localSettings);
+                BdApi.setData("lineNumbers", "settings", localSettings);
             }
             return $.extend({}, defaultSettings, localSettings);
         }
 
         try {
-            bdPluginStorage.set("lineNumbers", "settings", settings);
+            BdApi.setData("lineNumbers", "settings", settings);
         } catch (err) {
             console.warn("LineNumbers:", "unable to save settings:", err);
         }
