@@ -325,7 +325,7 @@ var lineNumbers = function () {};
     };
 
     lineNumbers.prototype.getVersion = function () {
-        return "1.1.8";
+        return "1.1.9";
     };
 
     lineNumbers.prototype.getAuthor = function () {
